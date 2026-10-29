@@ -79,3 +79,36 @@ test('weatherView rounds and assembles everything', () => {
   assert.strictEqual(v.sun.text, 'Sunset at 17:05');
   assert.strictEqual(v.hours.length, 6);
 });
+
+test('nextHours swaps to night icons when is_day is 0', () => {
+  const night = {
+    hourly: {
+      time: ['2026-10-29T20:00', '2026-10-29T21:00'],
+      temperature_2m: [9.4, 8.6],
+      weather_code: [0, 2],
+      is_day: [0, 0]
+    }
+  };
+  const h = Logic.nextHours(night, new Date(2026, 9, 29, 19, 30), 2);
+  assert.deepStrictEqual(h.map(x => x.time), ['20:00', '21:00']);
+  assert.deepStrictEqual(h.map(x => x.icon), ['moon', 'partly-night']);
+});
+
+test('weatherView at night shows moon icon and tonight sentence', () => {
+  const nightData = JSON.parse(JSON.stringify(data));
+  nightData.current.is_day = 0;
+  nightData.current.weather_code = 0;
+  const v = Logic.weatherView(nightData, new Date(2026, 9, 29, 22, 0));
+  assert.strictEqual(v.icon, 'moon');
+  assert.strictEqual(v.label, 'Clear');
+  assert.strictEqual(v.sentence, 'Clear skies tonight.');
+  assert.strictEqual(v.sun.kind, 'sunrise');
+  assert.strictEqual(v.sun.text, 'Sunrise at 08:14');
+});
+
+test('weatherView day sentence and hours match nextHours', () => {
+  const now = new Date(2026, 9, 29, 10, 34);
+  const v = Logic.weatherView(data, now);
+  assert.strictEqual(v.sentence, 'Clear skies and sunshine.');
+  assert.deepStrictEqual(v.hours, Logic.nextHours(data, now, 6));
+});
