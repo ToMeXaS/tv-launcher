@@ -2,7 +2,10 @@
   'use strict';
   var BG_COUNT = 10;
   var BACK = [10009, 8, 27]; // Tizen Back; Backspace/Escape when previewing in a browser
+  var tiles = []; // visible tiles in launch order
   var focus = 0;
+  var zone = 'tiles'; // 'tiles', 'weather' (Up from the tiles) or 'gear' (Up again)
+  var settings = null;
   var inputMode = false;
   var pendingInput = false;
   var root = document.documentElement;
@@ -12,34 +15,42 @@
   var WEATHER_MAX_AGE = 12 * 3600 * 1000;
   var WEATHER_REFRESH = 30 * 60 * 1000;
   var inputRequest = 0;
-  var weatherFocused = false; // Up from the tiles focuses the weather card
   var weekOpen = false;
-  var AMBIENT_AFTER = 3 * 60 * 1000; // idle time before only the photo and clock stay up
   var lastKey = Date.now();
   var ambient = false;
 
   function $(id) { return document.getElementById(id); }
 
-  function loadFocus() {
-    try {
-      var v = parseInt(localStorage.getItem('focus'), 10);
-      if (v >= 0 && v < TILES.length) return v;
-    } catch (e) { /* storage unavailable */ }
-    return 0;
+  function savedFocusId() {
+    try { return localStorage.getItem('focus-id'); } catch (e) { return null; } // storage unavailable
   }
 
   function saveFocus() {
-    try { localStorage.setItem('focus', String(focus)); } catch (e) { /* storage unavailable */ }
+    try { localStorage.setItem('focus-id', tiles[focus].id); } catch (e) { /* storage unavailable */ }
+  }
+
+  function weatherShown() { return !!weatherData && settings.weather; }
+
+  // Rebuilds the tile row from the settings, keeping focus on the same app when it is still shown.
+  function applySettings() {
+    var id = tiles.length ? tiles[focus].id : savedFocusId();
+    settings = Settings.get();
+    tiles = Logic.visibleTiles(settings, TILES);
+    focus = 0;
+    for (var i = 0; i < tiles.length; i++) if (tiles[i].id === id) focus = i;
+    document.body.classList.toggle('weather-off', !settings.weather);
+    if (zone === 'weather' && !weatherShown()) zone = 'tiles';
+    renderTiles();
   }
 
   function renderTiles() {
     var row = $('tiles');
     row.innerHTML = '';
-    TILES.forEach(function (t, i) {
+    tiles.forEach(function (t, i) {
       var el = document.createElement('div');
       el.className = 'tile' + (t.glass ? ' glass' : '') + (t.light ? ' light' : '');
       if (t.bg) el.style.background = t.bg;
-      el.innerHTML = '<div class="logo">' + Icons.app[t.logo] + '</div><div class="label">' + t.label + '</div>' +
+      el.innerHTML = '<div class="logo">' + Icons.tileLogo(t) + '</div><div class="label">' + Logic.escapeHtml(t.label) + '</div>' +
         (i < 9 ? '<div class="num">' + (i + 1) + '</div>' : '');
       row.appendChild(el);
     });
@@ -48,8 +59,9 @@
 
   function updateFocus() {
     var els = $('tiles').children;
-    for (var i = 0; i < els.length; i++) els[i].classList.toggle('focused', !weatherFocused && i === focus);
-    $('weather').classList.toggle('focused', weatherFocused);
+    for (var i = 0; i < els.length; i++) els[i].classList.toggle('focused', zone === 'tiles' && i === focus);
+    $('weather').classList.toggle('focused', zone === 'weather');
+    $('gear').classList.toggle('focused', zone === 'gear');
   }
 
   function tick() {
@@ -58,7 +70,8 @@
     $('date').textContent = $('a-date').textContent = Logic.formatDate(now);
     $('greeting').textContent = Logic.greeting(now.getHours());
     setBackground();
-    if (!ambient && !inputMode && !pendingInput && !document.hidden && Date.now() - lastKey > AMBIENT_AFTER) enterAmbient();
+    if (!ambient && settings.ambientMin && !inputMode && !pendingInput && !Settings.isOpen() && !document.hidden &&
+      Date.now() - lastKey > settings.ambientMin * 60 * 1000) enterAmbient();
   }
 
   function enterAmbient() {
@@ -80,7 +93,7 @@
 
   function dropWeatherFocus() {
     closeWeek();
-    if (weatherFocused) { weatherFocused = false; updateFocus(); }
+    if (zone === 'weather') { zone = 'tiles'; updateFocus(); }
   }
 
   function renderWeather(data, at) {
@@ -175,7 +188,7 @@
   }
 
   function activate() {
-    var t = TILES[focus];
+    var t = tiles[focus];
     saveFocus();
     if (t.appId) TV.launchApp(t.appId, showError);
     else {
@@ -183,6 +196,10 @@
       pendingInput = true;
       TV.showInput(t.input, function () { enterInput(id); }, function (msg) { inputFailed(id, msg); });
     }
+  }
+
+  function openSettings() {
+    Settings.open(applySettings);
   }
 
   function refreshScreen() { tick(); renderWeather(); }
@@ -196,13 +213,19 @@
     if (pendingInput) { if (isBack) { pendingInput = false; TV.hideInput(); } return; }
     if (inputMode) { if (isBack) exitInput(); return; }
     if (weekOpen) { if (isBack || k === 13) closeWeek(); return; }
-    var n = Logic.numberTile(k, TILES.length);
-    if (n !== -1) { focus = n; weatherFocused = false; updateFocus(); activate(); return; }
-    if (k === 38) { if (weatherData) { weatherFocused = true; updateFocus(); } }
-    else if (k === 40 || ((k === 37 || k === 39) && weatherFocused)) { weatherFocused = false; updateFocus(); }
-    else if (k === 37) { focus = Logic.moveFocus(focus, -1, TILES.length); updateFocus(); }
-    else if (k === 39) { focus = Logic.moveFocus(focus, 1, TILES.length); updateFocus(); }
-    else if (k === 13) { if (weatherFocused) openWeek(); else activate(); }
+    if (Settings.isOpen()) { Settings.key(k); return; }
+    var n = Logic.numberTile(k, tiles.length);
+    if (n !== -1) { focus = n; zone = 'tiles'; updateFocus(); activate(); return; }
+    if (k === 38) { zone = zone === 'tiles' && weatherShown() ? 'weather' : 'gear'; updateFocus(); }
+    else if (k === 40) { zone = zone === 'gear' && weatherShown() ? 'weather' : 'tiles'; updateFocus(); }
+    else if (zone === 'gear') { if (k === 13) openSettings(); }
+    else if (zone === 'weather') {
+      if (k === 13) openWeek();
+      else if (k === 37 || k === 39) { zone = 'tiles'; updateFocus(); }
+    }
+    else if (k === 37) { focus = Logic.moveFocus(focus, -1, tiles.length); updateFocus(); }
+    else if (k === 39) { focus = Logic.moveFocus(focus, 1, tiles.length); updateFocus(); }
+    else if (k === 13) activate();
   });
 
   document.addEventListener('visibilitychange', function () {
@@ -213,8 +236,9 @@
   });
 
   TV.registerNumberKeys();
-  focus = loadFocus();
-  renderTiles();
+  $('gear').innerHTML = Icons.gear;
+  Settings.load();
+  applySettings();
   refreshScreen();
   var cachedWeather = Weather.cached();
   if (cachedWeather) renderWeather(cachedWeather.data, cachedWeather.at);
