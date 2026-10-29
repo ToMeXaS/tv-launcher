@@ -7,6 +7,10 @@
   var pendingInput = false;
   var root = document.documentElement;
   var weatherData = null;
+  var weatherAt = 0;
+  var WEATHER_MAX_AGE = 12 * 3600 * 1000;
+  var WEATHER_REFRESH = 30 * 60 * 1000;
+  var inputRequest = 0;
 
   function $(id) { return document.getElementById(id); }
 
@@ -47,16 +51,26 @@
     $('greeting').textContent = Logic.greeting(now.getHours());
   }
 
-  function renderWeather(data) {
-    if (data) weatherData = data;
+  function hideWeather() {
+    weatherData = null;
+    document.body.classList.add('no-weather');
+  }
+
+  function renderWeather(data, at) {
+    if (data) { weatherData = data; weatherAt = at || Date.now(); }
+    if (weatherData && Date.now() - weatherAt > WEATHER_MAX_AGE) weatherData = null;
     document.body.classList.toggle('no-weather', !weatherData);
     if (!weatherData) return;
     try {
-      drawWeather(Logic.weatherView(weatherData, new Date()));
+      var v = Logic.weatherView(weatherData, new Date());
+      if (v) drawWeather(v); else hideWeather();
     } catch (e) {
-      weatherData = null;
-      document.body.classList.add('no-weather');
+      hideWeather();
     }
+  }
+
+  function refreshWeatherIfStale() {
+    if (Date.now() - weatherAt > WEATHER_REFRESH) Weather.refresh(renderWeather);
   }
 
   function drawWeather(v) {
@@ -85,14 +99,19 @@
     showError.timer = setTimeout(function () { el.classList.remove('show'); }, 4000);
   }
 
-  function enterInput() {
+  function enterInput(id) {
+    if (id !== inputRequest) return; // superseded by a newer request
     if (!pendingInput) { TV.hideInput(); return; } // cancelled by Back while pending
     pendingInput = false;
     inputMode = true;
     root.classList.add('input-mode');
   }
 
-  function inputFailed(msg) { pendingInput = false; showError(msg); }
+  function inputFailed(id, msg) {
+    if (id !== inputRequest) return;
+    pendingInput = false;
+    showError(msg);
+  }
 
   function exitInput() {
     TV.hideInput();
@@ -105,8 +124,9 @@
     saveFocus();
     if (t.appId) TV.launchApp(t.appId, showError);
     else {
+      var id = ++inputRequest;
       pendingInput = true;
-      TV.showInput(t.input, enterInput, inputFailed);
+      TV.showInput(t.input, function () { enterInput(id); }, function (msg) { inputFailed(id, msg); });
     }
   }
 
@@ -125,15 +145,16 @@
 
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) { pendingInput = false; if (inputMode) exitInput(); }
-    else refreshScreen();
+    else { refreshScreen(); refreshWeatherIfStale(); }
   });
 
   focus = loadFocus();
   renderTiles();
   refreshScreen();
-  renderWeather(Weather.cached());
+  var cachedWeather = Weather.cached();
+  if (cachedWeather) renderWeather(cachedWeather.data, cachedWeather.at);
   Weather.refresh(renderWeather);
   setInterval(tick, 10000);
   setInterval(function () { renderWeather(); }, 10 * 60 * 1000);
-  setInterval(function () { Weather.refresh(renderWeather); }, 30 * 60 * 1000);
+  setInterval(function () { Weather.refresh(renderWeather); }, WEATHER_REFRESH);
 })();
