@@ -89,3 +89,41 @@ html.ambient header, html.ambient .hero, html.ambient .card, html.ambient #tiles
 body.no-weather .wx { display: none; }
 html.input-mode, html.input-mode body { background: transparent !important; }
 html.input-mode #ui { display: none; }
+.hdr-right { display: flex; align-items: center; gap: 28px; }
+#gear { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: .8; transition: transform .15s ease-out; }
+#gear svg { width: 36px; height: 36px; display: block; }
+#gear.focused { opacity: 1; background: rgba(255,255,255,.15); box-shadow: 0 0 0 4px #fff; transform: scale(1.1); }
+.tile .logo img { height: 96px; width: auto; display: block; margin-top: -20px; }
+.tile .logo .letter { display: block; font-size: 84px; font-weight: 600; margin-top: -20px; }
+#settings {
+  display: none; position: absolute; inset: 0;
+  background: rgba(8,12,18,.7); backdrop-filter: blur(24px);
+}
+#settings h2 { position: absolute; left: 120px; top: 100px; margin: 0; font-size: 44px; font-weight: 400; }
+#s-nav { position: absolute; left: 120px; top: 220px; width: 340px; }
+.snav { font-size: 30px; padding: 18px 26px; border-radius: 12px; margin-bottom: 10px; opacity: .6; }
+.snav.active { opacity: 1; background: rgba(255,255,255,.08); }
+.snav.focused { box-shadow: 0 0 0 4px #fff; }
+#s-panel { position: absolute; left: 520px; right: 114px; top: 212px; bottom: 170px; padding: 8px 6px; overflow: hidden; }
+.srow {
+  display: flex; align-items: center; gap: 24px; height: 76px; padding: 0 24px; margin-bottom: 12px;
+  border-radius: 12px; font-size: 28px; background: rgba(255,255,255,.06);
+}
+.srow.focused { box-shadow: 0 0 0 4px #fff; }
+.srow.off .s-logo, .srow.off .s-name, .srow.off .s-value { opacity: .4; }
+.srow.carrying { background: rgba(124,196,255,.25); box-shadow: 0 0 0 4px #7CC4FF; }
+.s-logo { width: 72px; height: 48px; display: flex; align-items: center; justify-content: center; }
+.s-logo svg, .s-logo img { max-width: 72px; max-height: 44px; display: block; }
+.s-logo .letter { font-size: 34px; font-weight: 600; }
+.s-name { flex: 1; }
+.s-num { width: 30px; text-align: center; font-size: 24px; opacity: .6; }
+.s-value { font-size: 24px; opacity: .75; }
+.s-btn { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.1); }
+.s-btn.blank { background: none; }
+.s-btn svg { width: 26px; height: 26px; display: block; }
+.s-btn.focused { box-shadow: 0 0 0 4px #fff; background: rgba(255,255,255,.2); }
+.s-msg { font-size: 28px; opacity: .7; padding: 18px 24px; }
+#settings .hint { position: absolute; left: 0; right: 0; bottom: 80px; text-align: center; font-size: 22px; opacity: .7; }
+html.settings-open #settings { display: block; }
+html.settings-open header, html.settings-open .hero, html.settings-open .card, html.settings-open #tiles { visibility: hidden; }
+body.weather-off .wx { display: none; }

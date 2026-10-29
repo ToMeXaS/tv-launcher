@@ -34,5 +34,20 @@ var Icons = (function () {
     youtube: '<svg viewBox="0 0 90 64" xmlns="http://www.w3.org/2000/svg"><rect y="4" width="90" height="56" rx="16" fill="#FF0000"/><path d="M36 20l23 12-23 12z" fill="#fff"/></svg>'
   };
 
-  return { weather: weather, sun: sunsetIcon, app: app };
+  var gear = '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round">' +
+    '<circle cx="32" cy="32" r="9"/><circle cx="32" cy="32" r="19"/>' +
+    '<path d="M32 4v9M32 51v9M4 32h9M51 32h9M12.2 12.2l6.4 6.4M45.4 45.4l6.4 6.4M12.2 51.8l6.4-6.4M45.4 18.6l6.4-6.4"/></g></svg>';
+  var move = '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M32 6l13 16H19zM32 58L19 42h26z" fill="#fff"/></svg>';
+  var remove = '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M18 18l28 28M46 18L18 46" stroke="#fff" stroke-width="6" stroke-linecap="round"/></svg>';
+
+  // Built-in tiles use their drawn logo; added apps use the TV's icon, or their first letter when it won't load.
+  function tileLogo(t) {
+    if (!t.added) return app[t.logo];
+    var letter = '<span class="letter"' + (t.icon ? ' style="display:none"' : '') + '>' +
+      Logic.escapeHtml(t.label.charAt(0).toUpperCase()) + '</span>';
+    if (!t.icon) return letter;
+    return '<img src="' + Logic.escapeHtml(t.icon) + '" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'\'">' + letter;
+  }
+
+  return { weather: weather, sun: sunsetIcon, app: app, gear: gear, move: move, remove: remove, tileLogo: tileLogo };
 })();

@@ -41,5 +41,26 @@ var TV = (function () {
     }
   }
 
-  return { launchApp: launchApp, showInput: showInput, hideInput: hideInput, registerNumberKeys: registerNumberKeys };
+  // Apps shown in the TV's app list, minus this launcher: [{ appId, label, icon }].
+  function listApps(onApps, onError) {
+    if (!hasTizen) {
+      onApps([
+        { appId: 'demo.Spotify', label: 'Spotify', icon: '' },
+        { appId: 'demo.Plex', label: 'Plex', icon: 'missing.png' }, // exercises the letter fallback
+        { appId: 'org.tizen.netflix-app', label: 'Netflix', icon: '' } // already a tile, so not listed
+      ]);
+      return;
+    }
+    try {
+      var self = tizen.application.getCurrentApplication().appInfo.id;
+      tizen.application.getAppsInfo(function (list) {
+        onApps(list.filter(function (a) { return a.show && a.id !== self; }).map(function (a) {
+          var icon = a.iconPath || '';
+          return { appId: a.id, label: a.name || a.id, icon: icon.charAt(0) === '/' ? 'file://' + icon : icon };
+        }));
+      }, function (e) { onError(e.message); });
+    } catch (e) { onError(e.message || String(e)); }
+  }
+
+  return { launchApp: launchApp, showInput: showInput, hideInput: hideInput, registerNumberKeys: registerNumberKeys, listApps: listApps };
 })();

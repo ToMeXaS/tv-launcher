@@ -8,7 +8,7 @@
 <body class="no-weather">
   <div id="ui">
     <div class="shade"></div>
-    <header><div class="brand">&#10035; Home</div><div id="clock"></div></header>
+    <header><div class="brand">&#10035; Home</div><div class="hdr-right"><div id="gear"></div><div id="clock"></div></div></header>
     <section class="hero">
       <div id="date"></div>
       <h1 id="greeting"></h1>
@@ -30,6 +30,12 @@
       <div id="week-days"></div>
       <div class="hint">Back to close</div>
     </section>
+    <section id="settings">
+      <h2>Settings</h2>
+      <div id="s-nav"></div>
+      <div id="s-panel"></div>
+      <div id="s-hint" class="hint"></div>
+    </section>
     <div id="ambient">
       <div id="a-clock"></div>
       <div id="a-date"></div>
@@ -42,6 +48,7 @@
   <script src="js/tiles.js"></script>
   <script src="js/tv.js"></script>
   <script src="js/weather.js"></script>
+  <script src="js/settings.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
