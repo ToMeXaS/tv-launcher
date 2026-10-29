@@ -28,7 +28,7 @@ section list, closes settings.
      it, and OK or Back drops it. Left returns from the handle to the row.
    - Added (non-built-in) tiles also have a remove button (✕) after the handle, reached with Right.
 2. **Add app** — installed apps (`show === true`, excluding the launcher and apps already tiled),
-   sorted by name. OK appends the app as a tile at the end and shows a toast.
+   sorted by name. OK appends the app as a tile at the end and confirms it in the hint line.
 3. **Display**
    - Ambient after: Off / 1 / 3 / 5 / 10 min (OK cycles).
    - Weather card: On / Off (OK toggles). Off hides the card, its sentence and sun line, and its
@@ -76,8 +76,8 @@ to the label's first letter.
 
 - `js/settings.js` — new: settings overlay rendering, its key handling, persistence.
   Exposes `Settings.load()`, `Settings.open(onClose)`, `Settings.isOpen()`, `Settings.key(e)`.
-- `js/logic.js` — pure helpers: `mergeTiles`, `moveTile`, `toggleHidden`, `addApp`, `removeApp`,
-  `normalizeSettings`.
+- `js/logic.js` — pure helpers: `normalizeSettings`, `allTiles`, `visibleTiles`, `moveTile`, `toggleHidden`,
+  `addApp`, `removeApp`, `availableApps`, `nextAmbient`, `setOption`, `escapeHtml`.
 - `js/main.js` — gear focus, hands keys to `Settings` while open, re-renders tiles and applies
   display options on close; reads ambient delay and weather toggle from settings.
 - `js/icons.js` — gear icon. `index.html`/`style.css` — gear, overlay markup and styles.
