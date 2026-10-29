@@ -22,7 +22,12 @@
   function $(id) { return document.getElementById(id); }
 
   function savedFocusId() {
-    try { return localStorage.getItem('focus-id'); } catch (e) { return null; } // storage unavailable
+    try {
+      var id = localStorage.getItem('focus-id');
+      if (id) return id;
+      var idx = parseInt(localStorage.getItem('focus'), 10); // old version saved a tile index
+      return idx >= 0 && idx < TILES.length ? TILES[idx].id : null;
+    } catch (e) { return null; } // storage unavailable
   }
 
   function saveFocus() {

@@ -41,7 +41,7 @@ var TV = (function () {
     }
   }
 
-  // Apps shown in the TV's app list, minus this launcher: [{ appId, label, icon }].
+  // Real user apps (filtered by Logic.isUserApp), minus this launcher: [{ appId, label, icon }].
   function listApps(onApps, onError) {
     if (!hasTizen) {
       onApps([

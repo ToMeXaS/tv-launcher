@@ -41,7 +41,7 @@ temperature stay up; any key brings the rest back.
 
 - **Tiles**: OK shows/hides a tile. Right then OK picks it up, Up/Down move it, OK drops it. Apps you added have a
   remove button after the move handle.
-- **Add app**: lists apps installed on the TV that don't have a tile yet; OK adds one at the end.
+- **Add app**: lists apps installed on the TV that don't have a tile yet; OK adds one at the end. Only regular installed apps are listed (system apps, and a few Samsung apps like SmartThings, are left out).
 - **Display**: ambient delay (Off, 1, 3, 5, 10 min) and the weather card on/off.
 - **Reset**: OK twice restores the default tiles and display options.
 

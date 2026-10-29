@@ -27,7 +27,7 @@ section list, closes settings.
    - Right on a row focuses its ⇅ handle; OK there picks the tile up. While carried, Up/Down move
      it, and OK or Back drops it. Left returns from the handle to the row.
    - Added (non-built-in) tiles also have a remove button (✕) after the handle, reached with Right.
-2. **Add app** — installed apps (`show === true`, excluding the launcher and apps already tiled),
+2. **Add app** — installed apps (regular user apps, excluding the launcher and apps already tiled),
    sorted by name. OK appends the app as a tile at the end and confirms it in the hint line.
 3. **Display**
    - Ambient after: Off / 1 / 3 / 5 / 10 min (OK cycles).
@@ -64,8 +64,10 @@ Every change is applied and saved immediately; there is no save button.
 
 ## Installed apps
 
-`TV.listApps(onApps, onError)` wraps `tizen.application.getAppsInfo`, keeps `show === true`,
-drops this launcher's own id, returns `{ appId, label, icon }` sorted by label. In a desktop
+`TV.listApps(onApps, onError)` wraps `tizen.application.getAppsInfo`, keeps shown apps whose icon is
+`/opt/usr/apps/<pkg>/shared/res/<appId>.png|jpg`, drops `com.samsung.tv.CSBilling`,
+`com.samsung.tv.quickpanel` and this launcher's own id (on this TV getAppsInfo returns ~220 shown
+entries, mostly internal), returns `{ appId, label, icon }` sorted by label. In a desktop
 browser it returns a small fake list so the screen can be previewed. Requires the
 `http://tizen.org/privilege/application.info` privilege in `config.xml`.
 

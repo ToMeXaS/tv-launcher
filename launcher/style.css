@@ -69,7 +69,7 @@ header {
 .day .hi { font-size: 56px; font-weight: 300; margin-top: 24px; }
 .day .lo { opacity: .7; }
 .day .rain { color: #7CC4FF; margin-top: 18px; }
-#week .hint { position: absolute; left: 0; right: 0; bottom: 80px; text-align: center; font-size: 22px; opacity: .7; white-space: pre; }
+#week .hint { position: absolute; left: 0; right: 0; bottom: 80px; text-align: center; font-size: 22px; opacity: .7; }
 html.week-open #week { display: block; }
 html.week-open header, html.week-open .hero, html.week-open .card, html.week-open #tiles { visibility: hidden; }
 #toast {
@@ -123,7 +123,7 @@ html.input-mode #ui { display: none; }
 .s-btn svg { width: 26px; height: 26px; display: block; }
 .s-btn.focused { box-shadow: 0 0 0 4px #fff; background: rgba(255,255,255,.2); }
 .s-msg { font-size: 28px; opacity: .7; padding: 18px 24px; }
-#settings .hint { position: absolute; left: 0; right: 0; bottom: 80px; text-align: center; font-size: 22px; opacity: .7; }
+#settings .hint { position: absolute; left: 0; right: 0; bottom: 80px; text-align: center; font-size: 22px; opacity: .7; white-space: pre; }
 html.settings-open #settings { display: block; }
 html.settings-open header, html.settings-open .hero, html.settings-open .card, html.settings-open #tiles { visibility: hidden; }
 body.weather-off .wx { display: none; }

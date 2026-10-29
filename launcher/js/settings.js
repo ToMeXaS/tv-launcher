@@ -168,6 +168,8 @@ var Settings = (function () {
   function hint() {
     if (level === 0) return 'OK · open    Back · close';
     if (carrying) return 'Up / Down · move    OK · drop';
+    if (sec === 1 && (!apps || appsError || !appRows().length)) return 'Back · sections';
+    if (sec === 1) return 'OK · add    Back · sections';
     if (sec !== 0) return 'OK · select    Back · sections';
     if (col === 0) return 'OK · show / hide    Right · move';
     if (col === 1) return 'OK · pick up' + (maxCol() === 2 ? '    Right · remove' : '');
