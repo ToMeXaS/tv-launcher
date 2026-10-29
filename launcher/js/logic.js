@@ -59,12 +59,23 @@
     return { label: row[1], sentence: isDay ? row[2] : row[3], icon: icon };
   }
 
-  function sunLine(now, data) {
-    var sunrise = parseLocal(data.daily.sunrise[0]);
-    var sunset = parseLocal(data.daily.sunset[0]);
+  // Index of now's local date in data.daily.time ('YYYY-MM-DD'), or -1.
+  function todayIndex(data, now) {
+    var key = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+    var t = data.daily.time || [];
+    return t.indexOf(key);
+  }
+
+  function sunLine(now, data, idx) {
+    if (idx === undefined) idx = todayIndex(data, now);
+    var d = data.daily;
+    var sunrise = parseLocal(d.sunrise[idx]);
+    var sunset = parseLocal(d.sunset[idx]);
     if (now < sunrise) return { kind: 'sunrise', text: 'Sunrise at ' + formatTime(sunrise) };
     if (now < sunset) return { kind: 'sunset', text: 'Sunset at ' + formatTime(sunset) };
-    return { kind: 'sunrise', text: 'Sunrise at ' + formatTime(parseLocal(data.daily.sunrise[1])) };
+    // tomorrow's row may be absent (data fetched yesterday); today's time is within minutes
+    var next = d.sunrise[idx + 1] || d.sunrise[idx];
+    return { kind: 'sunrise', text: 'Sunrise at ' + formatTime(parseLocal(next)) };
   }
 
   function nextHours(data, now, count) {
@@ -82,7 +93,10 @@
     return out;
   }
 
+  // Returns null when the data has no row for today (too old to show).
   function weatherView(data, now) {
+    var idx = todayIndex(data, now);
+    if (idx === -1) return null;
     var c = data.current;
     var info = weatherInfo(c.weather_code, c.is_day === 1);
     return {
@@ -90,12 +104,12 @@
       label: info.label,
       sentence: info.sentence,
       icon: info.icon,
-      hi: Math.round(data.daily.temperature_2m_max[0]),
-      lo: Math.round(data.daily.temperature_2m_min[0]),
+      hi: Math.round(data.daily.temperature_2m_max[idx]),
+      lo: Math.round(data.daily.temperature_2m_min[idx]),
       feels: Math.round(c.apparent_temperature),
       wind: Math.round(c.wind_speed_10m),
       humidity: Math.round(c.relative_humidity_2m),
-      sun: sunLine(now, data),
+      sun: sunLine(now, data, idx),
       hours: nextHours(data, now, 6)
     };
   }
@@ -103,7 +117,7 @@
   var Logic = {
     formatTime: formatTime, formatDate: formatDate, greeting: greeting,
     moveFocus: moveFocus, photoIndex: photoIndex, parseLocal: parseLocal,
-    weatherInfo: weatherInfo, sunLine: sunLine, nextHours: nextHours, weatherView: weatherView
+    weatherInfo: weatherInfo, todayIndex: todayIndex, sunLine: sunLine, nextHours: nextHours, weatherView: weatherView
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = Logic;

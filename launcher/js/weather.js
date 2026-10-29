@@ -11,7 +11,7 @@ var Weather = (function () {
   function cached() {
     try {
       var c = JSON.parse(localStorage.getItem(KEY));
-      if (c && Date.now() - c.at < MAX_AGE) return c.data;
+      if (c && Date.now() - c.at < MAX_AGE) return { at: c.at, data: c.data };
     } catch (e) { /* no or bad cache */ }
     return null;
   }
@@ -21,8 +21,9 @@ var Weather = (function () {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
     }).then(function (data) {
-      try { localStorage.setItem(KEY, JSON.stringify({ at: Date.now(), data: data })); } catch (e) { /* full */ }
-      onData(data);
+      var at = Date.now();
+      try { localStorage.setItem(KEY, JSON.stringify({ at: at, data: data })); } catch (e) { /* full */ }
+      onData(data, at);
     }).catch(function () { /* keep showing cache, or nothing */ });
   }
 

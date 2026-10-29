@@ -112,3 +112,16 @@ test('weatherView day sentence and hours match nextHours', () => {
   assert.strictEqual(v.sentence, 'Clear skies and sunshine.');
   assert.deepStrictEqual(v.hours, Logic.nextHours(data, now, 6));
 });
+
+test('weatherView uses the daily row matching today, not index 0', () => {
+  const v = Logic.weatherView(data, new Date(2026, 9, 30, 9, 0)); // fetched yesterday
+  assert.strictEqual(v.hi, 12);
+  assert.strictEqual(v.lo, 6);
+  assert.strictEqual(v.sun.text, 'Sunset at 17:03');
+  assert.strictEqual(Logic.sunLine(new Date(2026, 9, 30, 6, 0), data).text, 'Sunrise at 08:14');
+});
+
+test('weatherView returns null when today has no daily row', () => {
+  assert.strictEqual(Logic.weatherView(data, new Date(2026, 9, 31, 9, 0)), null);
+  assert.strictEqual(Logic.weatherView(data, new Date(2026, 9, 28, 9, 0)), null);
+});
