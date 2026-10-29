@@ -57,7 +57,7 @@ var TV = (function () {
         onApps(list.filter(function (a) { return a.show && a.id !== self; }).map(function (a) {
           var icon = a.iconPath || '';
           return { appId: a.id, label: a.name || a.id, icon: icon.charAt(0) === '/' ? 'file://' + icon : icon };
-        }));
+        }).filter(Logic.isUserApp));
       }, function (e) { onError(e.message); });
     } catch (e) { onError(e.message || String(e)); }
   }

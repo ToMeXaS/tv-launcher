@@ -281,3 +281,21 @@ test('escapeHtml escapes markup characters', () => {
   assert.strictEqual(Logic.escapeHtml('<a href="x">Tom & Jerry\'s</a>'),
     '&lt;a href=&quot;x&quot;&gt;Tom &amp; Jerry&#39;s&lt;/a&gt;');
 });
+
+test('isUserApp accepts real apps whose icon is named after the app id', () => {
+  const ok = (appId, icon) => Logic.isUserApp({ appId, label: 'x', icon });
+  assert.strictEqual(ok('MCmYXNxgcu.DisneyPlus', '/opt/usr/apps/MCmYXNxgcu/shared/res/MCmYXNxgcu.DisneyPlus.png'), true);
+  assert.strictEqual(ok('org.tizen.browser', '/opt/usr/apps/org.tizen.browser/shared/res/org.tizen.browser.png'), true);
+  assert.strictEqual(ok('vbUQClczfR.Wuakitv', '/opt/usr/apps/vbUQClczfR/shared/res/vbUQClczfR.Wuakitv.jpg'), true);
+  assert.strictEqual(ok('org.tizen.browser', 'file:///opt/usr/apps/org.tizen.browser/shared/res/org.tizen.browser.PNG'), true);
+});
+
+test('isUserApp rejects system packages and internal blocklisted apps', () => {
+  const no = (appId, icon) => Logic.isUserApp({ appId, label: 'x', icon });
+  assert.strictEqual(no('com.samsung.tv.SmartThingsApp', '/opt/usr/apps/com.samsung.tv.SmartThingsApp/shared/res/icon.png'), false);
+  assert.strictEqual(no('org.tizen.pvrplayer', '/usr/apps/org.tizen.pvrplayer/shared/res/org.tizen.pvrplayer.png'), false);
+  assert.strictEqual(no('a.b', ''), false);
+  assert.strictEqual(no('a.b', '/opt/usr/apps/a.b/shared/res/other.id.png'), false);
+  assert.strictEqual(no('com.samsung.tv.CSBilling', '/opt/usr/apps/com.samsung.tv.CSBilling/shared/res/com.samsung.tv.CSBilling.png'), false);
+  assert.strictEqual(no('com.samsung.tv.quickpanel', '/opt/usr/apps/com.samsung.tv.quickpanel/shared/res/com.samsung.tv.quickpanel.png'), false);
+});

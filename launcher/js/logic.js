@@ -269,13 +269,23 @@
     return String(str).replace(/[&<>"']/g, function (c) { return HTML_ESCAPES[c]; });
   }
 
+  // Internal Samsung apps that pass the icon test but are not user-facing.
+  var INTERNAL_APPS = ['com.samsung.tv.CSBilling', 'com.samsung.tv.quickpanel'];
+
+  // Real apps ship an icon at /opt/usr/apps/<pkg>/shared/res/<appId>.(png|jpg|jpeg); system packages do not.
+  function isUserApp(app) {
+    if (!app || !app.appId || INTERNAL_APPS.indexOf(app.appId) !== -1) return false;
+    var m = /^(?:file:\/\/)?\/opt\/usr\/apps\/[^\/]+\/shared\/res\/([^\/]+)\.(?:png|jpe?g)$/i.exec(app.icon || '');
+    return !!m && m[1] === app.appId;
+  }
+
   var Logic = {
     formatTime: formatTime, formatDate: formatDate, greeting: greeting,
     moveFocus: moveFocus, numberTile: numberTile, photoIndex: photoIndex, parseLocal: parseLocal,
     weatherInfo: weatherInfo, todayIndex: todayIndex, sunLine: sunLine, isNight: isNight, nextHours: nextHours, weatherView: weatherView,
     weekView: weekView,
     normalizeSettings: normalizeSettings, allTiles: allTiles, visibleTiles: visibleTiles, moveTile: moveTile,
-    toggleHidden: toggleHidden, addApp: addApp, removeApp: removeApp, availableApps: availableApps,
+    toggleHidden: toggleHidden, addApp: addApp, removeApp: removeApp, availableApps: availableApps, isUserApp: isUserApp,
     nextAmbient: nextAmbient, setOption: setOption, escapeHtml: escapeHtml
   };
 
