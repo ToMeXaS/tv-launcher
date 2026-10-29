@@ -27,7 +27,7 @@ var Icons = (function () {
 
   var app = {
     pc: '<svg viewBox="0 0 80 60" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="5" width="68" height="40" rx="4" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/><path d="M40 45v8" stroke="#fff" stroke-width="5"/><path d="M24 55h32" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg>',
-    hdmi: '<svg viewBox="0 0 80 48" xmlns="http://www.w3.org/2000/svg"><path d="M6 8h68v18l-9 13H15L6 26z" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/><rect x="19" y="18" width="42" height="8" rx="2" fill="#fff"/></svg>',
+    steamdeck: '<svg viewBox="0 0 96 48" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="6" width="90" height="36" rx="14" fill="none" stroke="#fff" stroke-width="5"/><rect x="30" y="14" width="36" height="20" rx="2" fill="#fff"/><path d="M16 13v9M11.5 17.5h9" stroke="#fff" stroke-width="3" stroke-linecap="round"/><g fill="#fff"><circle cx="80" cy="13.5" r="1.8"/><circle cx="80" cy="21.5" r="1.8"/><circle cx="76" cy="17.5" r="1.8"/><circle cx="84" cy="17.5" r="1.8"/><circle cx="16" cy="31" r="4.5"/><circle cx="80" cy="31" r="4.5"/></g></svg>',
     netflix: '<svg viewBox="0 0 40 64" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h11l18 44V0h11v64H29L11 20v44H0z" fill="#E50914"/></svg>',
     stremio: '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect x="14" y="14" width="36" height="36" rx="7" transform="rotate(45 32 32)" fill="#8A5AFF"/><path d="M27 22l15 10-15 10z" fill="#fff"/></svg>',
     twitch: '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M14 4L8 14v40h14v8h8l8-8h10l12-12V4z" fill="#fff"/><path d="M18 9h37v29l-8 8H35l-8 8v-8h-9z" fill="#9146FF"/><path d="M28 18h5v14h-5zM41 18h5v14h-5z" fill="#fff"/></svg>',
@@ -35,9 +35,13 @@ var Icons = (function () {
     youtube: '<svg viewBox="0 0 90 64" xmlns="http://www.w3.org/2000/svg"><rect y="4" width="90" height="56" rx="16" fill="#FF0000"/><path d="M36 20l23 12-23 12z" fill="#fff"/></svg>'
   };
 
-  var gear = '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round">' +
-    '<circle cx="32" cy="32" r="9"/><circle cx="32" cy="32" r="19"/>' +
-    '<path d="M32 4v9M32 51v9M4 32h9M51 32h9M12.2 12.2l6.4 6.4M45.4 45.4l6.4 6.4M12.2 51.8l6.4-6.4M45.4 18.6l6.4-6.4"/></g></svg>';
+  // Solid cog: 8 square teeth on a disc, with a hole punched through by evenodd.
+  var gear = '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" fill-rule="evenodd" d="' +
+    'M27.3 11.5L27.5 3.4L36.5 3.4L36.7 11.5A21 21 0 0 1 43.1 14.2L49 8.5L55.5 15L49.8 20.9A21 21 0 0 1 52.5 27.3' +
+    'L60.6 27.5L60.6 36.5L52.5 36.7A21 21 0 0 1 49.8 43.1L55.5 49L49 55.5L43.1 49.8A21 21 0 0 1 36.7 52.5' +
+    'L36.5 60.6L27.5 60.6L27.3 52.5A21 21 0 0 1 20.9 49.8L15 55.5L8.5 49L14.2 43.1A21 21 0 0 1 11.5 36.7' +
+    'L3.4 36.5L3.4 27.5L11.5 27.3A21 21 0 0 1 14.2 20.9L8.5 15L15 8.5L20.9 14.2A21 21 0 0 1 27.3 11.5Z' +
+    'M41 32A9 9 0 1 0 23 32A9 9 0 1 0 41 32Z"/></svg>';
   var move = '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M32 6l13 16H19zM32 58L19 42h26z" fill="#fff"/></svg>';
   var remove = '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M18 18l28 28M46 18L18 46" stroke="#fff" stroke-width="6" stroke-linecap="round"/></svg>';
 

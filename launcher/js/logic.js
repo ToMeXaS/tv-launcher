@@ -203,7 +203,8 @@
       if (known.indexOf(id) !== -1 && order.indexOf(id) === -1) order.push(id);
     });
     var hidden = [];
-    (Array.isArray(s.hidden) ? s.hidden : []).forEach(function (id) {
+    var defaultHidden = builtins.filter(function (t) { return t.off; }).map(function (t) { return t.id; });
+    (Array.isArray(s.hidden) ? s.hidden : defaultHidden).forEach(function (id) {
       if (order.indexOf(id) !== -1 && hidden.indexOf(id) === -1) hidden.push(id);
     });
     if (hidden.length === order.length) hidden = [];

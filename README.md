@@ -1,8 +1,8 @@
 # TV Launcher
 
 A custom home screen (Tizen web app) for a Samsung TV (UE55CU8072UXXH): a day/night photo background (or a moving
-wallpaper that follows the time of day), clock, weather for Šiauliai and tiles for Netflix, Twitch, Stremio, YouTube,
-Moonlight and HDMI inputs. A PC-side watcher relaunches it whenever the TV powers on.
+wallpaper that follows the time of day), clock, weather for Šiauliai and tiles for the Steam Deck (HDMI 1), Moonlight,
+Stremio, YouTube and Netflix (PC on HDMI 2 and Twitch are there too, hidden until shown in Settings). A PC-side watcher relaunches it whenever the TV powers on.
 Design: `docs/superpowers/specs/2026-10-29-tv-launcher-design.md`.
 
 ![Home screen](docs/screenshots/home.jpg)
@@ -80,5 +80,5 @@ token: keep it private, never commit it.
 
 ## License
 
-MIT, see `LICENSE`. Background photos: see `launcher/bg/CREDITS.txt`. Not affiliated with Samsung, Netflix, YouTube,
-Twitch, Stremio, Moonlight or Wallpaper Engine; their names and logos belong to their owners.
+MIT, see `LICENSE`. Background photos: see `launcher/bg/CREDITS.txt`. Not affiliated with Samsung, Valve (Steam Deck),
+Netflix, YouTube, Twitch, Stremio, Moonlight or Wallpaper Engine; their names and logos belong to their owners.

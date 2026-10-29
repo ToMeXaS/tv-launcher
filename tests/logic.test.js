@@ -181,6 +181,12 @@ test('normalizeSettings gives defaults for missing or corrupt input', () => {
   }
 });
 
+test('normalizeSettings hides off-by-default built-ins only when nothing is saved', () => {
+  const b = [B[0], Object.assign({ off: true }, B[1]), B[2]];
+  assert.deepStrictEqual(Logic.normalizeSettings(null, b).hidden, ['netflix']);
+  assert.deepStrictEqual(Logic.normalizeSettings({ hidden: [] }, b).hidden, []);
+});
+
 test('normalizeSettings keeps saved order, drops unknown ids and appends new built-ins', () => {
   const s = Logic.normalizeSettings({ order: ['youtube', 'gone', 'hdmi1', 'youtube'], hidden: ['gone', 'hdmi1'] }, B);
   assert.deepStrictEqual(s.order, ['youtube', 'hdmi1', 'netflix']);
