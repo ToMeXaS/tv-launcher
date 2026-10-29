@@ -1,6 +1,7 @@
 # Run with: powershell -ExecutionPolicy Bypass -File scripts/record-wallpaper.ps1
 # Records the "Alone" Wallpaper Engine scene's four looks (morning, day, dusk, night) as seamless 30 s loops
-# in launcher/bg/alone/. Keep the mouse still while it runs: the scene's camera follows the cursor.
+# in launcher/bg/alone/, plus the still launcher/bg/alone.jpg. Keep the mouse still while it runs: the scene's
+# camera follows the cursor. The files are gitignored: the artwork isn't ours to publish.
 # Wallpaper Engine renders no faster than its global FPS limit, so the script raises that for the recording,
 # restarting Wallpaper Engine, and puts the original config back afterwards.
 param([string[]]$Periods = @('morning', 'day', 'dusk', 'night'), [int]$Fps = 30)
@@ -85,5 +86,11 @@ try {
   Get-Process wallpaper64 -ErrorAction SilentlyContinue | Stop-Process -Force
   Copy-Item $configBackup $weConfig -Force
   Restart-WallpaperEngine
+}
+# The launcher only offers the Alone background when this still exists; it also shows while a loop loads.
+$still = Join-Path $out 'dusk.mp4'
+if (Test-Path $still) {
+  ffmpeg -hide_banner -loglevel error -y -i $still -frames:v 1 -q:v 3 (Join-Path $root 'launcherglone.jpg')
+  if ($LASTEXITCODE -ne 0) { throw 'saving alone.jpg failed' }
 }
 Get-ChildItem $out -Filter *.mp4 | ForEach-Object { '{0}  {1:N1} MB' -f $_.Name, ($_.Length / 1MB) }

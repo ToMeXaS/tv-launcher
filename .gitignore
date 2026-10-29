@@ -5,3 +5,6 @@ __pycache__/
 build/
 build-preview.png
 watcher.log
+# Alone wallpaper artwork: not ours to publish; record locally with scripts/record-wallpaper.ps1
+launcher/bg/alone.jpg
+launcher/bg/alone/

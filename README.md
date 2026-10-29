@@ -1,8 +1,8 @@
 # TV Launcher
 
-A custom home screen (Tizen web app) for a Samsung TV (UE55CU8072UXXH): a moving wallpaper background that
-follows the time of day, clock, weather for Šiauliai and tiles for Netflix, Twitch, Stremio, YouTube, Moonlight and
-HDMI inputs. A PC-side watcher relaunches it whenever the TV powers on.
+A custom home screen (Tizen web app) for a Samsung TV (UE55CU8072UXXH): a day/night photo background (or a moving
+wallpaper that follows the time of day), clock, weather for Šiauliai and tiles for Netflix, Twitch, Stremio, YouTube,
+Moonlight and HDMI inputs. A PC-side watcher relaunches it whenever the TV powers on.
 Design: `docs/superpowers/specs/2026-10-29-tv-launcher-design.md`.
 
 ![Home screen](docs/screenshots/home.jpg)
@@ -54,7 +54,9 @@ temperature stay up; any key brings the rest back.
   remove button after the move handle.
 - **Add app**: lists apps installed on the TV that don't have a tile yet; OK adds one at the end. Only regular installed apps are listed (system apps, and a few Samsung apps like SmartThings, are left out).
 - **Display**: ambient delay (Off, 1, 3, 5, 10 min), the weather card on/off, and the background (Alone, the PC's Wallpaper Engine scene as moving 30 s loops that follow the time of day: morning 04-09, day 09-17, dusk 17-20, night 20-04; or the rotating day/night photos).
-  The loops in `launcher/bg/alone/` are recorded from Wallpaper Engine with `powershell -ExecutionPolicy Bypass -File scripts/record-wallpaper.ps1`
+  The Alone wallpaper isn't included in this repo (it's someone else's artwork). Without it the launcher uses the
+  photos. If you own the [Alone wallpaper](https://steamcommunity.com/sharedfiles/filedetails/?id=3448877775) in
+  Wallpaper Engine, record it into `launcher/bg/alone/` with `powershell -ExecutionPolicy Bypass -File scripts/record-wallpaper.ps1`
   (needs ffmpeg; keep the mouse still for ~5 min; it raises Wallpaper Engine's FPS limit while recording and restores it after).
   Ambient delay and Background are dropdowns: OK opens the list, Up/Down chooses, OK selects, Back cancels. OK flips the weather card.
 - **Reset**: OK twice restores the default tiles and display options.
@@ -75,3 +77,8 @@ Settings are stored on the TV (`localStorage`, key `settings-v1`).
 
 `cam.py` (camera snapshot of the TV), `remote.py` (send TV remote keys). `token.txt` holds the TV pairing
 token: keep it private, never commit it.
+
+## License
+
+MIT, see `LICENSE`. Background photos: see `launcher/bg/CREDITS.txt`. Not affiliated with Samsung, Netflix, YouTube,
+Twitch, Stremio, Moonlight or Wallpaper Engine; their names and logos belong to their owners.

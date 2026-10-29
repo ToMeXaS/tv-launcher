@@ -12,6 +12,7 @@
   var weatherData = null;
   var bgUrl = '';
   var bgPeriod = ''; // Alone look currently playing, '' when the videos are off
+  var aloneMissing = false; // the Alone files aren't in the repo (recorded locally), so a fresh copy uses the photos
   var weatherAt = 0;
   var WEATHER_MAX_AGE = 12 * 3600 * 1000;
   var WEATHER_REFRESH = 30 * 60 * 1000;
@@ -162,7 +163,7 @@
   function setBackground() {
     var now = new Date();
     var n = Logic.photoIndex(now, BG_COUNT) + 1;
-    var alone = settings.background === 'alone';
+    var alone = settings.background === 'alone' && !aloneMissing;
     var url = alone ? 'url(bg/alone.jpg)' :
       'url(bg/' + (Logic.isNight(now, weatherData) ? 'night/' : '') + (n < 10 ? '0' : '') + n + '.jpg)';
     if (url !== bgUrl) document.body.style.backgroundImage = bgUrl = url;
@@ -279,6 +280,9 @@
   TV.registerNumberKeys();
   $('gear').innerHTML = Icons.gear;
   Settings.load();
+  var aloneProbe = new Image();
+  aloneProbe.onerror = function () { aloneMissing = true; setBackground(); };
+  aloneProbe.src = 'bg/alone.jpg';
   applySettings();
   refreshScreen();
   var cachedWeather = Weather.cached();
