@@ -12,12 +12,12 @@ test('formatDate is uppercase weekday, day, month', () => {
 });
 
 test('greeting bands', () => {
-  assert.strictEqual(Logic.greeting(4), 'Good night.');
+  assert.strictEqual(Logic.greeting(4), 'Good evening.');
   assert.strictEqual(Logic.greeting(5), 'Good morning.');
   assert.strictEqual(Logic.greeting(11), 'Good morning.');
   assert.strictEqual(Logic.greeting(12), 'Good afternoon.');
   assert.strictEqual(Logic.greeting(18), 'Good evening.');
-  assert.strictEqual(Logic.greeting(23), 'Good night.');
+  assert.strictEqual(Logic.greeting(23), 'Good evening.');
 });
 
 test('moveFocus clamps at both ends', () => {

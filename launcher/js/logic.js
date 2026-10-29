@@ -14,8 +14,7 @@
   function greeting(h) {
     if (h >= 5 && h < 12) return 'Good morning.';
     if (h >= 12 && h < 18) return 'Good afternoon.';
-    if (h >= 18 && h < 23) return 'Good evening.';
-    return 'Good night.';
+    return 'Good evening.'; // through to 05:00: "Good night" reads like a goodbye
   }
 
   function moveFocus(i, dir, count) {
