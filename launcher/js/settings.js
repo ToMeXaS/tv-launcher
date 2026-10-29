@@ -3,6 +3,12 @@ var Settings = (function () {
   var KEY = 'settings-v1';
   var BACK = [10009, 8, 27]; // Tizen Back; Backspace/Escape when previewing in a browser
   var SECTIONS = ['Tiles', 'Add app', 'Display', 'Reset'];
+  // Display rows: 'choice' rows open a dropdown of Logic.choices(key), 'toggle' rows flip a boolean.
+  var DISPLAY = [
+    { label: 'Ambient screen after', key: 'ambientMin', type: 'choice' },
+    { label: 'Weather card', key: 'weather', type: 'toggle' },
+    { label: 'Background', key: 'background', type: 'choice' }
+  ];
   var s = null; // current settings, always normalized
   var shown = false;
   var onClose = null;
@@ -11,6 +17,7 @@ var Settings = (function () {
   var row = 0;
   var col = 0; // Tiles rows: 0 the row, 1 move handle, 2 remove button (added apps only)
   var carrying = false;
+  var pick = -1; // highlighted choice while a Display dropdown is open, -1 when closed
   var apps = null; // installed apps, fetched the first time Add app is entered
   var appsError = false;
   var confirmReset = false;
@@ -33,13 +40,14 @@ var Settings = (function () {
 
   function tileRows() { return Logic.allTiles(s, TILES); }
   function appRows() { return apps ? Logic.availableApps(apps, s, TILES) : []; }
-  function rowCount() { return [tileRows().length, appRows().length, 3, 1][sec]; }
+  function rowCount() { return [tileRows().length, appRows().length, DISPLAY.length, 1][sec]; }
   function maxCol() { return sec !== 0 ? 0 : tileRows()[row].added ? 2 : 1; }
 
   function open(cb) {
     onClose = cb;
     shown = true;
     level = sec = row = col = 0;
+    pick = -1;
     carrying = confirmReset = appsError = false;
     apps = null;
     note = '';
@@ -86,9 +94,9 @@ var Settings = (function () {
       row = Math.max(0, Math.min(row, rowCount() - 1));
       note = 'Added ' + a.label;
     } else if (sec === 2) {
-      save(row === 0 ? Logic.setOption(s, 'ambientMin', Logic.nextAmbient(s.ambientMin)) :
-        row === 1 ? Logic.setOption(s, 'weather', !s.weather) :
-        Logic.setOption(s, 'background', s.background === 'alone' ? 'photos' : 'alone'));
+      var d = DISPLAY[row];
+      if (d.type === 'toggle') save(Logic.setOption(s, d.key, !s[d.key]));
+      else pick = Logic.choiceIndex(d.key, s[d.key]);
     } else if (!confirmReset) {
       confirmReset = true;
     } else {
@@ -106,6 +114,11 @@ var Settings = (function () {
       if (isBack) { close(); return; }
       if (dir) sec = Logic.moveFocus(sec, dir, SECTIONS.length);
       else if (k === 39 || k === 13) enter();
+    } else if (pick !== -1) {
+      var list = Logic.choices(DISPLAY[row].key);
+      if (dir) pick = Logic.moveFocus(pick, dir, list.length);
+      else if (k === 13) { save(Logic.setOption(s, DISPLAY[row].key, list[pick].value)); pick = -1; }
+      else if (isBack) pick = -1;
     } else if (carrying) {
       if (dir) carry(dir);
       else if (k === 13 || isBack) carrying = false;
@@ -153,14 +166,20 @@ var Settings = (function () {
   }
 
   function displayPanel() {
-    return [
-      ['Ambient screen after', s.ambientMin ? s.ambientMin + ' min' : 'Off'],
-      ['Weather card', s.weather ? 'On' : 'Off'],
-      ['Background', s.background === 'alone' ? 'Alone' : 'Photos']
-    ].map(function (r, i) {
-      return '<div class="srow' + (rowFocused(i) ? ' focused' : '') + '"><span class="s-name">' + r[0] + '</span>' +
-        '<span class="s-value">' + r[1] + '</span></div>';
+    return DISPLAY.map(function (d, i) {
+      var open = rowFocused(i) && pick !== -1;
+      var value = d.type === 'toggle' ? (s[d.key] ? 'On' : 'Off') :
+        Logic.choices(d.key)[Logic.choiceIndex(d.key, s[d.key])].label + ' <span class="s-caret">&#9662;</span>';
+      return '<div class="srow' + (open ? ' open' : rowFocused(i) ? ' focused' : '') + '"><span class="s-name">' + d.label + '</span>' +
+        '<span class="s-value">' + value + '</span>' + (open ? dropdown(d.key) : '') + '</div>';
     }).join('');
+  }
+
+  function dropdown(key) {
+    return '<div class="s-drop">' + Logic.choices(key).map(function (c, i) {
+      return '<div class="s-opt' + (i === pick ? ' focused' : '') + '"><span>' + c.label + '</span>' +
+        '<span class="s-tick">' + (c.value === s[key] ? '&#10003;' : '') + '</span></div>';
+    }).join('') + '</div>';
   }
 
   function resetPanel() {
@@ -170,6 +189,7 @@ var Settings = (function () {
 
   function hint() {
     if (level === 0) return 'OK · open    Back · close';
+    if (pick !== -1) return 'Up / Down · choose    OK · select    Back · cancel';
     if (carrying) return 'Up / Down · move    OK · drop';
     if (sec === 1 && (!apps || appsError || !appRows().length)) return 'Back · sections';
     if (sec === 1) return 'OK · add    Back · sections';
@@ -179,12 +199,13 @@ var Settings = (function () {
     return 'OK · remove';
   }
 
-  // Scrolls the panel just enough to show the focused row, focus ring included.
+  // Scrolls the panel just enough to show the focused row (or the open dropdown), focus ring included.
   function keepInView(panel) {
-    var el = panel.querySelector('.focused');
+    var el = panel.querySelector('.s-drop') || panel.querySelector('.focused');
     if (!el) { panel.scrollTop = 0; return; }
-    if (!el.classList.contains('srow')) el = el.parentNode;
-    var top = el.offsetTop - 8, bottom = el.offsetTop + el.offsetHeight + 8;
+    if (!el.classList.contains('srow') && !el.classList.contains('s-drop')) el = el.parentNode;
+    var offset = el.getBoundingClientRect().top - panel.getBoundingClientRect().top + panel.scrollTop;
+    var top = offset - 8, bottom = offset + el.offsetHeight + 8;
     if (top < panel.scrollTop) panel.scrollTop = top;
     else if (bottom > panel.scrollTop + panel.clientHeight) panel.scrollTop = bottom - panel.clientHeight;
   }

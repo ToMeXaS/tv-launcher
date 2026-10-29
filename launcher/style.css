@@ -113,6 +113,15 @@ html.input-mode #ui, html.input-mode #bgv { display: none; }
 }
 .srow.focused { box-shadow: 0 0 0 4px #fff; }
 .srow.off .s-logo, .srow.off .s-name, .srow.off .s-value { opacity: .4; }
+.srow.open { position: relative; background: rgba(255,255,255,.14); }
+.s-caret { font-size: 20px; margin-left: 6px; }
+.s-drop {
+  position: absolute; right: 0; top: 84px; width: 340px; z-index: 2; padding: 8px;
+  border-radius: 12px; background: #141a22; box-shadow: 0 12px 40px rgba(0,0,0,.5);
+}
+.s-opt { display: flex; justify-content: space-between; align-items: center; height: 64px; padding: 0 20px; border-radius: 8px; font-size: 26px; }
+.s-opt.focused { box-shadow: 0 0 0 4px #fff; background: rgba(255,255,255,.1); }
+.s-tick { color: #7CC4FF; }
 .srow.carrying { background: rgba(124,196,255,.25); box-shadow: 0 0 0 4px #7CC4FF; }
 .s-logo { width: 72px; height: 48px; display: flex; align-items: center; justify-content: center; }
 .s-logo svg, .s-logo img { max-width: 72px; max-height: 44px; display: block; }

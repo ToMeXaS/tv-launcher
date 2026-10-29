@@ -45,6 +45,7 @@ temperature stay up; any key brings the rest back.
 - **Display**: ambient delay (Off, 1, 3, 5, 10 min), the weather card on/off, and the background (Alone, the PC's Wallpaper Engine scene as moving 30 s loops that follow the time of day: morning 04-09, day 09-17, dusk 17-20, night 20-04; or the rotating day/night photos).
   The loops in `launcher/bg/alone/` are recorded from Wallpaper Engine with `powershell -ExecutionPolicy Bypass -File scripts/record-wallpaper.ps1`
   (needs ffmpeg; keep the mouse still for ~5 min; it raises Wallpaper Engine's FPS limit while recording and restores it after).
+  Ambient delay and Background are dropdowns: OK opens the list, Up/Down chooses, OK selects, Back cancels. OK flips the weather card.
 - **Reset**: OK twice restores the default tiles and display options.
 
 Settings are stored on the TV (`localStorage`, key `settings-v1`).

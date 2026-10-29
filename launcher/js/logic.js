@@ -157,8 +157,23 @@
     return out;
   }
 
-  var AMBIENT_CHOICES = [0, 1, 3, 5, 10]; // minutes; 0 = never
-  var BACKGROUNDS = ['alone', 'photos']; // 'alone' = the PC's Wallpaper Engine scene, 'photos' = rotating day/night photos
+  // Settings picked from a dropdown, in menu order.
+  var CHOICES = {
+    ambientMin: [ // minutes; 0 = never
+      { value: 0, label: 'Off' }, { value: 1, label: '1 min' }, { value: 3, label: '3 min' },
+      { value: 5, label: '5 min' }, { value: 10, label: '10 min' }
+    ],
+    background: [ // 'alone' = the PC's Wallpaper Engine scene, 'photos' = rotating day/night photos
+      { value: 'alone', label: 'Alone' }, { value: 'photos', label: 'Photos' }
+    ]
+  };
+
+  function choices(key) { return CHOICES[key]; }
+
+  function choiceIndex(key, value) {
+    for (var i = 0; i < CHOICES[key].length; i++) if (CHOICES[key][i].value === value) return i;
+    return -1;
+  }
 
   function copyOf(o) {
     var r = {};
@@ -197,9 +212,9 @@
       order: order,
       hidden: hidden,
       added: added,
-      ambientMin: AMBIENT_CHOICES.indexOf(s.ambientMin) !== -1 ? s.ambientMin : 3,
+      ambientMin: choiceIndex('ambientMin', s.ambientMin) !== -1 ? s.ambientMin : 3,
       weather: typeof s.weather === 'boolean' ? s.weather : true,
-      background: BACKGROUNDS.indexOf(s.background) !== -1 ? s.background : 'alone'
+      background: choiceIndex('background', s.background) !== -1 ? s.background : 'alone'
     };
   }
 
@@ -267,10 +282,6 @@
     });
   }
 
-  function nextAmbient(min) {
-    return AMBIENT_CHOICES[(AMBIENT_CHOICES.indexOf(min) + 1) % AMBIENT_CHOICES.length];
-  }
-
   var HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
   function escapeHtml(str) {
@@ -294,7 +305,7 @@
     weekView: weekView,
     normalizeSettings: normalizeSettings, allTiles: allTiles, visibleTiles: visibleTiles, moveTile: moveTile,
     toggleHidden: toggleHidden, addApp: addApp, removeApp: removeApp, availableApps: availableApps, isUserApp: isUserApp,
-    nextAmbient: nextAmbient, setOption: setOption, escapeHtml: escapeHtml
+    choices: choices, choiceIndex: choiceIndex, setOption: setOption, escapeHtml: escapeHtml
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = Logic;

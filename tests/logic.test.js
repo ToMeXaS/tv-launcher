@@ -269,8 +269,16 @@ test('availableApps drops apps that already have a tile and sorts by name', () =
   assert.deepStrictEqual(Logic.availableApps(apps, s, B).map(a => a.appId), ['a', 'z']);
 });
 
-test('nextAmbient cycles Off, 1, 3, 5, 10 minutes', () => {
-  assert.deepStrictEqual([0, 1, 3, 5, 10, 7].map(Logic.nextAmbient), [1, 3, 5, 10, 0, 0]);
+test('choices lists each dropdown setting in order with labels', () => {
+  assert.deepStrictEqual(Logic.choices('ambientMin').map(c => c.label), ['Off', '1 min', '3 min', '5 min', '10 min']);
+  assert.deepStrictEqual(Logic.choices('ambientMin').map(c => c.value), [0, 1, 3, 5, 10]);
+  assert.deepStrictEqual(Logic.choices('background').map(c => c.value), ['alone', 'photos']);
+});
+
+test('choiceIndex finds the saved value, -1 when it is not a choice', () => {
+  assert.strictEqual(Logic.choiceIndex('ambientMin', 5), 3);
+  assert.strictEqual(Logic.choiceIndex('background', 'photos'), 1);
+  assert.strictEqual(Logic.choiceIndex('ambientMin', 7), -1);
 });
 
 test('setOption returns a changed copy', () => {
