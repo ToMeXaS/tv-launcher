@@ -301,3 +301,9 @@ test('isUserApp rejects system packages and internal blocklisted apps', () => {
   assert.strictEqual(no('com.samsung.tv.CSBilling', '/opt/usr/apps/com.samsung.tv.CSBilling/shared/res/com.samsung.tv.CSBilling.png'), false);
   assert.strictEqual(no('com.samsung.tv.quickpanel', '/opt/usr/apps/com.samsung.tv.quickpanel/shared/res/com.samsung.tv.quickpanel.png'), false);
 });
+
+test('alonePeriod follows the wallpaper schedule: morning 4, day 9, dusk 17, night 20', () => {
+  const at = h => Logic.alonePeriod(new Date(2026, 9, 29, h, 30));
+  assert.deepStrictEqual([0, 3, 4, 8, 9, 16, 17, 19, 20, 23].map(at),
+    ['night', 'night', 'morning', 'morning', 'day', 'day', 'dusk', 'dusk', 'night', 'night']);
+});

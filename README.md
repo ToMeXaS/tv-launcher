@@ -42,7 +42,9 @@ temperature stay up; any key brings the rest back.
 - **Tiles**: OK shows/hides a tile. Right then OK picks it up, Up/Down move it, OK drops it. Apps you added have a
   remove button after the move handle.
 - **Add app**: lists apps installed on the TV that don't have a tile yet; OK adds one at the end. Only regular installed apps are listed (system apps, and a few Samsung apps like SmartThings, are left out).
-- **Display**: ambient delay (Off, 1, 3, 5, 10 min), the weather card on/off, and the background (Alone, a still of the PC's Wallpaper Engine scene, or the rotating day/night photos).
+- **Display**: ambient delay (Off, 1, 3, 5, 10 min), the weather card on/off, and the background (Alone, the PC's Wallpaper Engine scene as moving 30 s loops that follow the time of day: morning 04-09, day 09-17, dusk 17-20, night 20-04; or the rotating day/night photos).
+  The loops in `launcher/bg/alone/` are recorded from Wallpaper Engine with `powershell -ExecutionPolicy Bypass -File scripts/record-wallpaper.ps1`
+  (needs ffmpeg; keep the mouse still for ~5 min; it raises Wallpaper Engine's FPS limit while recording and restores it after).
 - **Reset**: OK twice restores the default tiles and display options.
 
 Settings are stored on the TV (`localStorage`, key `settings-v1`).

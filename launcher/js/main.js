@@ -11,6 +11,7 @@
   var root = document.documentElement;
   var weatherData = null;
   var bgUrl = '';
+  var bgPeriod = ''; // Alone look currently playing, '' when the videos are off
   var weatherAt = 0;
   var WEATHER_MAX_AGE = 12 * 3600 * 1000;
   var WEATHER_REFRESH = 30 * 60 * 1000;
@@ -161,9 +162,39 @@
   function setBackground() {
     var now = new Date();
     var n = Logic.photoIndex(now, BG_COUNT) + 1;
-    var url = settings.background === 'alone' ? 'url(bg/alone.jpg)' :
+    var alone = settings.background === 'alone';
+    var url = alone ? 'url(bg/alone.jpg)' :
       'url(bg/' + (Logic.isNight(now, weatherData) ? 'night/' : '') + (n < 10 ? '0' : '') + n + '.jpg)';
     if (url !== bgUrl) document.body.style.backgroundImage = bgUrl = url;
+    setVideo(alone ? Logic.alonePeriod(now) : '');
+  }
+
+  // Loads the period's loop into the idle video and crossfades to it once it plays; the still stays behind as a fallback.
+  function setVideo(period) {
+    if (period === bgPeriod) return;
+    bgPeriod = period;
+    var vids = document.querySelectorAll('#bgv video');
+    var cur = vids[0].classList.contains('on') ? vids[0] : vids[1];
+    var next = cur === vids[0] ? vids[1] : vids[0];
+    if (!period) {
+      for (var i = 0; i < vids.length; i++) { vids[i].classList.remove('on'); vids[i].pause(); vids[i].removeAttribute('src'); vids[i].load(); }
+      return;
+    }
+    next.onplaying = function () {
+      next.onplaying = null;
+      next.classList.add('on');
+      cur.classList.remove('on');
+      setTimeout(function () { if (!cur.classList.contains('on')) cur.pause(); }, 2500);
+    };
+    next.src = 'bg/alone/' + period + '.mp4';
+    next.play();
+  }
+
+  // Pauses the loop while the launcher is hidden or an input is showing.
+  function syncVideo() {
+    var v = document.querySelector('#bgv video.on');
+    if (!v) return;
+    if (document.hidden || inputMode) v.pause(); else v.play();
   }
 
   function showError(msg) {
@@ -180,6 +211,7 @@
     pendingInput = false;
     inputMode = true;
     root.classList.add('input-mode');
+    syncVideo();
   }
 
   function inputFailed(id, msg) {
@@ -192,6 +224,7 @@
     TV.hideInput();
     inputMode = false;
     root.classList.remove('input-mode');
+    syncVideo();
   }
 
   function activate() {
@@ -238,6 +271,7 @@
   document.addEventListener('visibilitychange', function () {
     lastKey = Date.now();
     exitAmbient();
+    syncVideo();
     if (document.hidden) { pendingInput = false; if (inputMode) exitInput(); closeWeek(); }
     else { refreshScreen(); refreshWeatherIfStale(); }
   });

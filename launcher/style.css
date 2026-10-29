@@ -4,6 +4,8 @@ html, body {
   color: #fff; font-family: 'SamsungOne', 'Segoe UI', Roboto, sans-serif;
 }
 #ui { position: absolute; inset: 0; }
+#bgv video { position: absolute; inset: 0; width: 1920px; height: 1080px; object-fit: cover; opacity: 0; transition: opacity 2s; }
+#bgv video.on { opacity: 1; }
 .shade {
   position: absolute; inset: 0;
   background:
@@ -88,7 +90,7 @@ html.ambient #ambient { opacity: 1; }
 html.ambient header, html.ambient .hero, html.ambient .card, html.ambient #tiles { opacity: 0; }
 body.no-weather .wx { display: none; }
 html.input-mode, html.input-mode body { background: transparent !important; }
-html.input-mode #ui { display: none; }
+html.input-mode #ui, html.input-mode #bgv { display: none; }
 .hdr-right { display: flex; align-items: center; gap: 28px; }
 #gear { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: .8; transition: transform .15s ease-out; }
 #gear svg { width: 36px; height: 36px; display: block; }

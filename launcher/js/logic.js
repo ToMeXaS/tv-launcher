@@ -35,6 +35,12 @@
     return day % count;
   }
 
+  // Which look of the Alone scene to show; same hours as the wallpaper's own settings.
+  function alonePeriod(d) {
+    var h = d.getHours();
+    return h < 4 ? 'night' : h < 9 ? 'morning' : h < 17 ? 'day' : h < 20 ? 'dusk' : 'night';
+  }
+
   function parseLocal(s) {
     var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s);
     return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
@@ -283,7 +289,7 @@
 
   var Logic = {
     formatTime: formatTime, formatDate: formatDate, greeting: greeting,
-    moveFocus: moveFocus, numberTile: numberTile, photoIndex: photoIndex, parseLocal: parseLocal,
+    moveFocus: moveFocus, numberTile: numberTile, photoIndex: photoIndex, alonePeriod: alonePeriod, parseLocal: parseLocal,
     weatherInfo: weatherInfo, todayIndex: todayIndex, sunLine: sunLine, isNight: isNight, nextHours: nextHours, weatherView: weatherView,
     weekView: weekView,
     normalizeSettings: normalizeSettings, allTiles: allTiles, visibleTiles: visibleTiles, moveTile: moveTile,
