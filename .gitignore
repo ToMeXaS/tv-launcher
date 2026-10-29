@@ -2,3 +2,5 @@ token.txt
 snap*.jpg
 __pycache__/
 .superpowers/
+build/
+build-preview.png
