@@ -22,7 +22,7 @@ header {
 #sun { display: flex; align-items: center; gap: 12px; font-size: 26px; margin: 0; opacity: .9; }
 #sun svg { width: 30px; height: 30px; }
 .card {
-  position: absolute; right: 120px; bottom: 300px; width: 600px; /* bottom-anchored: the focus hint grows it upward, clear of the tiles */ padding: 28px 32px; border-radius: 20px;
+  position: absolute; right: 120px; bottom: 300px; width: 600px; padding: 28px 32px; border-radius: 20px;
   background: rgba(20,28,36,.35); backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,.15);
 }
 .now { display: flex; align-items: center; gap: 22px; }
@@ -46,7 +46,7 @@ header {
 .tile .label { position: absolute; left: 20px; bottom: 16px; font-size: 22px; }
 .tile.light .label { color: #111; }
 .tile.focused { transform: scale(1.06); box-shadow: 0 0 0 4px #fff, 0 12px 40px rgba(0,0,0,.5); z-index: 1; }
-.card .hint { display: none; margin-top: 16px; font-size: 20px; opacity: .75; text-align: center; }
+.card .hint { display: none; position: absolute; left: 0; right: 0; bottom: 100%; margin-bottom: 14px; font-size: 22px; opacity: .85; text-align: center; text-shadow: 0 1px 6px rgba(0,0,0,.8); }
 .card.focused { box-shadow: 0 0 0 4px #fff, 0 12px 40px rgba(0,0,0,.5); }
 .card.focused .hint { display: block; }
 #week {
