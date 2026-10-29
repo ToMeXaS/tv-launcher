@@ -1,13 +1,13 @@
 """Opens the custom UI app whenever the TV powers on. Usage: python watcher.py APP_ID
 
-Polls the TV's REST API; on a standby/off -> on transition, launches APP_ID over the remote channel.
+Polls the TV's REST API; on a standby/off -> on transition, launches APP_ID.
 """
 import json
 import sys
 import time
 import urllib.request
 
-from remote import TV, connect
+from remote import TV
 
 POLL_SECONDS = 2
 
@@ -21,11 +21,9 @@ def power_state():
 
 
 def launch(app_id):
-    ws = connect()
-    ws.send(json.dumps({"method": "ms.channel.emit", "params": {
-        "event": "ed.apps.launch", "to": "host",
-        "data": {"appId": app_id, "action_type": "DEEP_LINK"}}}))
-    ws.close()
+    # The 2023 Samsung firmware ignores ed.apps.launch for Tizen web apps; the REST endpoint works.
+    req = urllib.request.Request(f"http://{TV}:8001/api/v2/applications/{app_id}", method="POST")
+    urllib.request.urlopen(req, timeout=5).read()
 
 
 if __name__ == "__main__":
