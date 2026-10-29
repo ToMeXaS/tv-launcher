@@ -22,7 +22,7 @@ header {
 #sun { display: flex; align-items: center; gap: 12px; font-size: 26px; margin: 0; opacity: .9; }
 #sun svg { width: 30px; height: 30px; }
 .card {
-  position: absolute; right: 120px; top: 420px; width: 600px; padding: 28px 32px; border-radius: 20px;
+  position: absolute; right: 120px; bottom: 300px; width: 600px; /* bottom-anchored: the focus hint grows it upward, clear of the tiles */ padding: 28px 32px; border-radius: 20px;
   background: rgba(20,28,36,.35); backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,.15);
 }
 .now { display: flex; align-items: center; gap: 22px; }
