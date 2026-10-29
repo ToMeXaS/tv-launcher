@@ -10,7 +10,7 @@ apps and inputs in one press.
 
 ## Scope
 
-In: one screen with photo background, greeting, clock, date, detailed weather (Šiauliai) and six tiles;
+In: one screen with photo background, greeting, clock, date, detailed weather (Šiauliai) and seven tiles;
 remote navigation; auto-launch on power-on.
 Out: replacing Samsung's Home button (impossible on Tizen), Live TV / Browser tiles, recommendations,
 settings/gallery/weather sub-screens.
@@ -39,7 +39,7 @@ gradient over the lower/left area for legibility. Text in white.
   - Up from the tiles focuses the card (white outline, "OK · 7-day forecast" hint); Down/Left/Right go back.
   - OK opens a full-screen week view: one column per day from today (name, date, icon, condition, high,
     low, rain chance). Back or OK closes it.
-- Bottom: one row of six equal tiles: **HDMI 1 · PC (HDMI 2) · Netflix · Stremio · Twitch · YouTube**.
+- Bottom: one row of seven equal tiles: **HDMI 1 · PC (HDMI 2) · Netflix · Stremio · Twitch · YouTube · Moonlight**.
   - App tiles show a hand-drawn SVG of the app's logo on its brand colour, label underneath
     (the TV refuses `sdb pull` of its icon store, so real icon files are not available).
   - Input tiles are translucent glass with an HDMI-port icon and label.

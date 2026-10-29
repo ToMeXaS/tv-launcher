@@ -30,6 +30,7 @@ var Icons = (function () {
     netflix: '<svg viewBox="0 0 40 64" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h11l18 44V0h11v64H29L11 20v44H0z" fill="#E50914"/></svg>',
     stremio: '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect x="14" y="14" width="36" height="36" rx="7" transform="rotate(45 32 32)" fill="#8A5AFF"/><path d="M27 22l15 10-15 10z" fill="#fff"/></svg>',
     twitch: '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M14 4L8 14v40h14v8h8l8-8h10l12-12V4z" fill="#fff"/><path d="M18 9h37v29l-8 8H35l-8 8v-8h-9z" fill="#9146FF"/><path d="M28 18h5v14h-5zM41 18h5v14h-5z" fill="#fff"/></svg>',
+    moonlight: '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M36 6a26 26 0 1 0 22 40A21 21 0 0 1 36 6z" fill="#EEF2F7"/><circle cx="48" cy="14" r="3" fill="#7CC4FF"/><circle cx="56" cy="26" r="2" fill="#7CC4FF"/></svg>',
     youtube: '<svg viewBox="0 0 90 64" xmlns="http://www.w3.org/2000/svg"><rect y="4" width="90" height="56" rx="16" fill="#FF0000"/><path d="M36 20l23 12-23 12z" fill="#fff"/></svg>'
   };
 

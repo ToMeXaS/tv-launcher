@@ -4,5 +4,6 @@ var TILES = [
   { label: 'Netflix', logo: 'netflix', appId: 'org.tizen.netflix-app', bg: '#000000' },
   { label: 'Stremio', logo: 'stremio', appId: 'IkWsFHtOY9.Stremio', bg: '#1E1640' },
   { label: 'Twitch', logo: 'twitch', appId: 'Jz7aUrV2Q4.Twitch', bg: '#9146FF' },
-  { label: 'YouTube', logo: 'youtube', appId: '9Ur5IzDKqV.TizenYouTube', bg: '#FFFFFF', light: true }
+  { label: 'YouTube', logo: 'youtube', appId: '9Ur5IzDKqV.TizenYouTube', bg: '#FFFFFF', light: true },
+  { label: 'Moonlight', logo: 'moonlight', appId: 'MoonLightS.MoonlightWasm', bg: '#14213A' }
 ];

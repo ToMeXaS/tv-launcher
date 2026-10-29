@@ -40,6 +40,7 @@ header {
   flex: 1; position: relative; border-radius: 14px;
   display: flex; align-items: center; justify-content: center;
   transition: transform .15s ease-out, box-shadow .15s ease-out;
+  will-change: transform; /* permanent layer: re-layering on focus change made tiles flash blank on the TV */
 }
 .tile.glass { background: rgba(30,36,44,.45); backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,.12); }
 .tile .logo svg { height: 76px; width: auto; display: block; margin-top: -20px; }
