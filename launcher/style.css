@@ -69,7 +69,7 @@ header {
 .day .hi { font-size: 56px; font-weight: 300; margin-top: 24px; }
 .day .lo { opacity: .7; }
 .day .rain { color: #7CC4FF; margin-top: 18px; }
-#week .hint { position: absolute; left: 0; right: 0; bottom: 80px; text-align: center; font-size: 22px; opacity: .7; }
+#week .hint { position: absolute; left: 0; right: 0; bottom: 80px; text-align: center; font-size: 22px; opacity: .7; white-space: pre; }
 html.week-open #week { display: block; }
 html.week-open header, html.week-open .hero, html.week-open .card, html.week-open #tiles { visibility: hidden; }
 #toast {

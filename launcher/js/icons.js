@@ -26,6 +26,7 @@ var Icons = (function () {
     '" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>');
 
   var app = {
+    pc: '<svg viewBox="0 0 80 60" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="5" width="68" height="40" rx="4" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/><path d="M40 45v8" stroke="#fff" stroke-width="5"/><path d="M24 55h32" stroke="#fff" stroke-width="5" stroke-linecap="round"/></svg>',
     hdmi: '<svg viewBox="0 0 80 48" xmlns="http://www.w3.org/2000/svg"><path d="M6 8h68v18l-9 13H15L6 26z" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round"/><rect x="19" y="18" width="42" height="8" rx="2" fill="#fff"/></svg>',
     netflix: '<svg viewBox="0 0 40 64" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h11l18 44V0h11v64H29L11 20v44H0z" fill="#E50914"/></svg>',
     stremio: '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect x="14" y="14" width="36" height="36" rx="7" transform="rotate(45 32 32)" fill="#8A5AFF"/><path d="M27 22l15 10-15 10z" fill="#fff"/></svg>',
