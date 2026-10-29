@@ -33,5 +33,13 @@ var TV = (function () {
     try { tizen.tvwindow.hide(function () {}, function () {}, 'MAIN'); } catch (e) { /* not shown */ }
   }
 
-  return { launchApp: launchApp, showInput: showInput, hideInput: hideInput };
+  // Digit keys only reach the app once registered.
+  function registerNumberKeys() {
+    if (!hasTizen) return;
+    for (var i = 1; i <= 9; i++) {
+      try { tizen.tvinputdevice.registerKey(String(i)); } catch (e) { /* key not on this remote */ }
+    }
+  }
+
+  return { launchApp: launchApp, showInput: showInput, hideInput: hideInput, registerNumberKeys: registerNumberKeys };
 })();

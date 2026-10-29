@@ -53,6 +53,19 @@ test('weatherInfo maps codes and swaps night icons', () => {
   assert.strictEqual(Logic.weatherInfo(12345, true).label, 'Overcast'); // unknown code fallback
 });
 
+test('isNight uses today\'s sunrise/sunset, else 18:00-06:00', () => {
+  assert.strictEqual(Logic.isNight(new Date(2026, 9, 29, 8, 11), data), true);
+  assert.strictEqual(Logic.isNight(new Date(2026, 9, 29, 8, 12), data), false);
+  assert.strictEqual(Logic.isNight(new Date(2026, 9, 29, 17, 4), data), false);
+  assert.strictEqual(Logic.isNight(new Date(2026, 9, 29, 17, 5), data), true);
+  // no weather, or no row for today
+  assert.strictEqual(Logic.isNight(new Date(2026, 9, 29, 17, 30), null), false);
+  assert.strictEqual(Logic.isNight(new Date(2026, 9, 29, 18, 0), null), true);
+  assert.strictEqual(Logic.isNight(new Date(2026, 9, 29, 5, 59), null), true);
+  assert.strictEqual(Logic.isNight(new Date(2026, 9, 29, 6, 0), null), false);
+  assert.strictEqual(Logic.isNight(new Date(2027, 0, 5, 20, 0), data), true);
+});
+
 test('sunLine: before sunrise, daytime, after sunset', () => {
   assert.deepStrictEqual(Logic.sunLine(new Date(2026, 9, 29, 6, 0), data), { kind: 'sunrise', text: 'Sunrise at 08:12' });
   assert.deepStrictEqual(Logic.sunLine(new Date(2026, 9, 29, 10, 34), data), { kind: 'sunset', text: 'Sunset at 17:05' });
@@ -145,4 +158,12 @@ test('weekView tolerates missing rain chance', () => {
   const d = JSON.parse(JSON.stringify(data));
   delete d.daily.precipitation_probability_max;
   assert.strictEqual(Logic.weekView(d, new Date(2026, 9, 29, 10, 0))[0].rain, null);
+});
+
+test('numberTile maps digit keys 1-9 to tile indexes within range', () => {
+  assert.strictEqual(Logic.numberTile(49, 7), 0); // '1'
+  assert.strictEqual(Logic.numberTile(55, 7), 6); // '7'
+  assert.strictEqual(Logic.numberTile(56, 7), -1); // '8' with only 7 tiles
+  assert.strictEqual(Logic.numberTile(48, 7), -1); // '0'
+  assert.strictEqual(Logic.numberTile(13, 7), -1);
 });

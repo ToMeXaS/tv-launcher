@@ -46,6 +46,8 @@ header {
 .tile .logo svg { height: 76px; width: auto; display: block; margin-top: -20px; }
 .tile .label { position: absolute; left: 20px; bottom: 16px; font-size: 22px; }
 .tile.light .label { color: #111; }
+.tile .num { position: absolute; right: 18px; top: 14px; font-size: 20px; opacity: .55; }
+.tile.light .num { color: #111; }
 .tile.focused { transform: scale(1.06); box-shadow: 0 0 0 4px #fff, 0 12px 40px rgba(0,0,0,.5); z-index: 1; }
 .card .hint { display: none; position: absolute; left: 0; right: 0; bottom: 100%; margin-bottom: 14px; font-size: 22px; opacity: .85; text-align: center; text-shadow: 0 1px 6px rgba(0,0,0,.8); }
 .card.focused { box-shadow: 0 0 0 4px #fff, 0 12px 40px rgba(0,0,0,.5); }
@@ -75,6 +77,15 @@ html.week-open header, html.week-open .hero, html.week-open .card, html.week-ope
   background: rgba(0,0,0,.8); border-radius: 12px; font-size: 24px; opacity: 0; transition: opacity .2s;
 }
 #toast.show { opacity: 1; }
+header, .hero, .card, #tiles { transition: opacity .8s; }
+#ambient { position: absolute; left: 120px; bottom: 100px; opacity: 0; transition: opacity .8s; text-shadow: 0 2px 16px rgba(0,0,0,.5); }
+#a-clock { font-size: 220px; font-weight: 200; line-height: 1; letter-spacing: -4px; }
+#a-date { font-size: 28px; letter-spacing: 6px; opacity: .85; margin: 20px 0 0 8px; }
+#ambient .wx { display: flex; align-items: center; gap: 16px; font-size: 48px; font-weight: 300; margin: 24px 0 0 4px; }
+#a-icon svg { width: 60px; height: 60px; display: block; }
+body.no-weather #ambient .wx { display: none; }
+html.ambient #ambient { opacity: 1; }
+html.ambient header, html.ambient .hero, html.ambient .card, html.ambient #tiles { opacity: 0; }
 body.no-weather .wx { display: none; }
 html.input-mode, html.input-mode body { background: transparent !important; }
 html.input-mode #ui { display: none; }

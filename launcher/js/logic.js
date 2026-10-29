@@ -23,6 +23,12 @@
     return n < 0 ? 0 : n >= count ? count - 1 : n;
   }
 
+  // Remote digit keys 1-9 (keyCodes 49-57) pick a tile; -1 for anything else or past the last tile.
+  function numberTile(keyCode, count) {
+    var i = keyCode - 49;
+    return i >= 0 && i < 9 && i < count ? i : -1;
+  }
+
   function photoIndex(d, count) {
     var day = Math.round((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) -
       Date.UTC(d.getFullYear(), 0, 1)) / 86400000);
@@ -76,6 +82,13 @@
     // tomorrow's row may be absent (data fetched yesterday); today's time is within minutes
     var next = d.sunrise[idx + 1] || d.sunrise[idx];
     return { kind: 'sunrise', text: 'Sunrise at ' + formatTime(parseLocal(next)) };
+  }
+
+  // Between sunset and sunrise when the weather data has today's row; otherwise 18:00-06:00.
+  function isNight(now, data) {
+    var idx = data ? todayIndex(data, now) : -1;
+    if (idx === -1) return now.getHours() >= 18 || now.getHours() < 6;
+    return now < parseLocal(data.daily.sunrise[idx]) || now >= parseLocal(data.daily.sunset[idx]);
   }
 
   function nextHours(data, now, count) {
@@ -140,8 +153,8 @@
 
   var Logic = {
     formatTime: formatTime, formatDate: formatDate, greeting: greeting,
-    moveFocus: moveFocus, photoIndex: photoIndex, parseLocal: parseLocal,
-    weatherInfo: weatherInfo, todayIndex: todayIndex, sunLine: sunLine, nextHours: nextHours, weatherView: weatherView,
+    moveFocus: moveFocus, numberTile: numberTile, photoIndex: photoIndex, parseLocal: parseLocal,
+    weatherInfo: weatherInfo, todayIndex: todayIndex, sunLine: sunLine, isNight: isNight, nextHours: nextHours, weatherView: weatherView,
     weekView: weekView
   };
 

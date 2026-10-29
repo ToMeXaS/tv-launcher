@@ -32,12 +32,14 @@ Back themselves). Workaround: pin "Home" as the first app in Smart Hub's app row
 
 ## Using it
 
-Left/Right pick a tile, OK opens it. Up focuses the weather card; OK there shows the 7-day forecast, Back closes it.
+Left/Right pick a tile, OK opens it, or press 1-7 to open a tile directly. Focus starts on the last tile opened.
+Up focuses the weather card; OK there shows the 7-day forecast, Back closes it. After 3 idle minutes only the photo,
+a big clock and the temperature stay up; any key brings the rest back.
 
 ## Customising
 
 - Tiles and app ids: `launcher/js/tiles.js`
-- Background photos: `launcher/bg/` (fetched by `scripts/fetch-backgrounds.py`)
+- Background photos: `launcher/bg/` by day, `launcher/bg/night/` between sunset and sunrise (fetched by `scripts/fetch-backgrounds.py`)
 
 ## Tests
 
