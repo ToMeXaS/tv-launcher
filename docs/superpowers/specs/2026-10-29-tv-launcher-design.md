@@ -17,7 +17,7 @@ settings/gallery/weather sub-screens.
 
 ## Tech
 
-Plain Tizen web app: `index.html`, `style.css`, `main.js`, `config.xml`, `icon.png`, `bg/*.jpg`, `icons/*.png`.
+Plain Tizen web app: `index.html`, `style.css`, `main.js`, `config.xml`, `icon.png`, `bg/*.jpg` (icons are inline SVG in `js/icons.js`).
 No framework, no build step.
 Packaged and signed with the existing Tizen Studio CLI (`C:\tizen-studio`) and Samsung certificate
 (`%USERPROFILE%\SamsungCertificate\TV`), installed over `sdb` (192.168.0.147:26101).
@@ -79,11 +79,16 @@ clock and tiles still render.
 
 - TV: Settings → Advanced Features → Start Screen Options → Autorun Last App = on (backup).
 - PC: `watcher.py <launcher app id>` registered to start hidden at Windows logon.
+- The watcher launches via REST `POST http://<tv>:8001/api/v2/applications/<id>` and debounces power-state
+  polls: the TV counts as off only after 5 consecutive not-on polls (or an explicit standby), so a single
+  failed poll never relaunches the launcher over a running app. Events are logged to `watcher.log`.
 
 ## Testing
 
 1. Layout/navigation in a desktop browser (arrow keys, Enter, Backspace as Back).
-2. On the TV via camera: each tile opens the right thing; Back from each app returns to the launcher.
+2. On the TV via camera: each tile opens the right thing.
+   Known platform limitation: Back inside Netflix/Twitch/Stremio/YouTube does not return to the launcher
+   (those apps handle Back themselves). Workaround: pin "Home" first in Smart Hub's app row.
 3. Power-cycle the TV: launcher appears automatically (watcher), and again with the PC off (Autorun Last App).
 
 ## Order of work
