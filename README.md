@@ -7,9 +7,9 @@ Design: `docs/superpowers/specs/2026-10-29-tv-launcher-design.md`.
 
 ![Home screen](docs/screenshots/home.jpg)
 
-Standby (ambient) screen, shown after a few idle minutes (Settings → Display → Ambient screen after):
+Ambient screen, shown after a few idle minutes (Settings → Display → Ambient screen after):
 
-![Standby screen](docs/screenshots/standby.jpg)
+![Ambient screen](docs/screenshots/standby.jpg)
 
 | 7-day forecast (Up, then OK on the weather card) | Settings (gear by the clock) |
 |---|---|
