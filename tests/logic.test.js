@@ -125,3 +125,24 @@ test('weatherView returns null when today has no daily row', () => {
   assert.strictEqual(Logic.weatherView(data, new Date(2026, 9, 31, 9, 0)), null);
   assert.strictEqual(Logic.weatherView(data, new Date(2026, 9, 28, 9, 0)), null);
 });
+
+test('weekView lists days from today with rounded temps and rain chance', () => {
+  const w = Logic.weekView(data, new Date(2026, 9, 29, 10, 34));
+  assert.deepStrictEqual(w, [
+    { day: 'Today', date: '29 Oct', icon: 'partly', label: 'Partly cloudy', hi: 17, lo: 11, rain: 10 },
+    { day: 'Fri', date: '30 Oct', icon: 'rain', label: 'Rain', hi: 12, lo: 6, rain: 85 }
+  ]);
+});
+
+test('weekView skips past days and is null without a row for today', () => {
+  const w = Logic.weekView(data, new Date(2026, 9, 30, 9, 0));
+  assert.deepStrictEqual(w.map(d => d.day), ['Today']);
+  assert.strictEqual(w[0].date, '30 Oct');
+  assert.strictEqual(Logic.weekView(data, new Date(2026, 9, 31, 9, 0)), null);
+});
+
+test('weekView tolerates missing rain chance', () => {
+  const d = JSON.parse(JSON.stringify(data));
+  delete d.daily.precipitation_probability_max;
+  assert.strictEqual(Logic.weekView(d, new Date(2026, 9, 29, 10, 0))[0].rain, null);
+});

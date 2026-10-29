@@ -114,10 +114,35 @@
     };
   }
 
+  var SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  var SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // Daily rows from today onward; null when the data has no row for today.
+  function weekView(data, now) {
+    var idx = todayIndex(data, now);
+    if (idx === -1) return null;
+    var d = data.daily, rain = d.precipitation_probability_max, out = [];
+    for (var i = idx; i < d.time.length; i++) {
+      var date = parseLocal(d.time[i] + 'T00:00');
+      var info = weatherInfo(d.weather_code[i], true);
+      out.push({
+        day: i === idx ? 'Today' : SHORT_DAYS[date.getDay()],
+        date: date.getDate() + ' ' + SHORT_MONTHS[date.getMonth()],
+        icon: info.icon,
+        label: info.label,
+        hi: Math.round(d.temperature_2m_max[i]),
+        lo: Math.round(d.temperature_2m_min[i]),
+        rain: rain && rain[i] != null ? Math.round(rain[i]) : null
+      });
+    }
+    return out;
+  }
+
   var Logic = {
     formatTime: formatTime, formatDate: formatDate, greeting: greeting,
     moveFocus: moveFocus, photoIndex: photoIndex, parseLocal: parseLocal,
-    weatherInfo: weatherInfo, todayIndex: todayIndex, sunLine: sunLine, nextHours: nextHours, weatherView: weatherView
+    weatherInfo: weatherInfo, todayIndex: todayIndex, sunLine: sunLine, nextHours: nextHours, weatherView: weatherView,
+    weekView: weekView
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = Logic;

@@ -30,6 +30,10 @@ Autorun Last App (backup for when the PC is off).
 Pressing Back inside Netflix/Twitch/Stremio/YouTube does not return to the launcher (those apps handle
 Back themselves). Workaround: pin "Home" as the first app in Smart Hub's app row.
 
+## Using it
+
+Left/Right pick a tile, OK opens it. Up focuses the weather card; OK there shows the 7-day forecast, Back closes it.
+
 ## Customising
 
 - Tiles and app ids: `launcher/js/tiles.js`

@@ -46,6 +46,29 @@ header {
 .tile .label { position: absolute; left: 20px; bottom: 16px; font-size: 22px; }
 .tile.light .label { color: #111; }
 .tile.focused { transform: scale(1.06); box-shadow: 0 0 0 4px #fff, 0 12px 40px rgba(0,0,0,.5); z-index: 1; }
+.card .hint { display: none; margin-top: 16px; font-size: 20px; opacity: .75; text-align: center; }
+.card.focused { box-shadow: 0 0 0 4px #fff, 0 12px 40px rgba(0,0,0,.5); }
+.card.focused .hint { display: block; }
+#week {
+  display: none; position: absolute; inset: 0; padding: 120px; box-sizing: border-box;
+  background: rgba(8,12,18,.6); backdrop-filter: blur(24px);
+}
+#week h2 { font-size: 44px; font-weight: 400; margin: 40px 0 60px; }
+#week-days { display: flex; gap: 20px; }
+.day {
+  flex: 1; padding: 32px 0; border-radius: 20px; text-align: center; font-size: 26px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+}
+.day .name { font-size: 34px; font-weight: 500; }
+.day .date { opacity: .7; margin-top: 6px; }
+.day svg { width: 110px; height: 110px; display: block; margin: 28px auto 16px; }
+.day .label { opacity: .85; min-height: 32px; }
+.day .hi { font-size: 56px; font-weight: 300; margin-top: 24px; }
+.day .lo { opacity: .7; }
+.day .rain { color: #7CC4FF; margin-top: 18px; }
+#week .hint { position: absolute; left: 0; right: 0; bottom: 80px; text-align: center; font-size: 22px; opacity: .7; }
+html.week-open #week { display: block; }
+html.week-open header, html.week-open .hero, html.week-open .card, html.week-open #tiles { visibility: hidden; }
 #toast {
   position: absolute; left: 50%; top: 60px; transform: translateX(-50%); padding: 16px 28px;
   background: rgba(0,0,0,.8); border-radius: 12px; font-size: 24px; opacity: 0; transition: opacity .2s;

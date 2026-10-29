@@ -36,6 +36,9 @@ gradient over the lower/left area for legibility. Text in white.
   - "Sunset at HH:MM" before today's sunset, "Sunrise at HH:MM" (tomorrow's) after it, with icon.
 - Weather card (right, frosted-glass panel): condition icon, current temperature, condition name, today's H/L;
   "Feels X° · Wind X km/h · Humidity X%"; next 6 hours as time / icon / temperature columns.
+  - Up from the tiles focuses the card (white outline, "OK · 7-day forecast" hint); Down/Left/Right go back.
+  - OK opens a full-screen week view: one column per day from today (name, date, icon, condition, high,
+    low, rain chance). Back or OK closes it.
 - Bottom: one row of six equal tiles: **HDMI 1 · PC (HDMI 2) · Netflix · Stremio · Twitch · YouTube**.
   - App tiles show a hand-drawn SVG of the app's logo on its brand colour, label underneath
     (the TV refuses `sdb pull` of its icon store, so real icon files are not available).
@@ -71,7 +74,7 @@ app so they load instantly with no network. Photo of the day = day-of-year mod c
 
 Open-Meteo forecast API (no key), Šiauliai 55.93 N, 23.31 E, timezone Europe/Vilnius: current temperature,
 apparent temperature, humidity, wind speed, weather code, is_day; hourly temperature + weather code; daily
-max/min, sunrise, sunset. Refresh every 30 min. Last good result cached in `localStorage` and rendered immediately on start.
+max/min, sunrise, sunset, weather code, max precipitation probability; 7 forecast days. Refresh every 30 min. Last good result cached in `localStorage` and rendered immediately on start.
 On failure with no cache, the weather card, weather sentence and sunset line are hidden; greeting, date,
 clock and tiles still render.
 

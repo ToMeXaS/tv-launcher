@@ -1,11 +1,11 @@
 var Weather = (function () {
   'use strict';
   var URL = 'https://api.open-meteo.com/v1/forecast?latitude=55.93&longitude=23.31' +
-    '&timezone=Europe%2FVilnius&forecast_days=2&wind_speed_unit=kmh' +
+    '&timezone=Europe%2FVilnius&forecast_days=7&wind_speed_unit=kmh' +
     '&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day' +
     '&hourly=temperature_2m,weather_code,is_day' +
-    '&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset';
-  var KEY = 'weather';
+    '&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,weather_code,precipitation_probability_max';
+  var KEY = 'weather-v2'; // v2: 7 days + daily codes
   var MAX_AGE = 12 * 3600 * 1000;
 
   function cached() {

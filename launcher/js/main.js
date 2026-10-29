@@ -11,6 +11,8 @@
   var WEATHER_MAX_AGE = 12 * 3600 * 1000;
   var WEATHER_REFRESH = 30 * 60 * 1000;
   var inputRequest = 0;
+  var weatherFocused = false; // Up from the tiles focuses the weather card
+  var weekOpen = false;
 
   function $(id) { return document.getElementById(id); }
 
@@ -41,7 +43,8 @@
 
   function updateFocus() {
     var els = $('tiles').children;
-    for (var i = 0; i < els.length; i++) els[i].classList.toggle('focused', i === focus);
+    for (var i = 0; i < els.length; i++) els[i].classList.toggle('focused', !weatherFocused && i === focus);
+    $('weather').classList.toggle('focused', weatherFocused);
   }
 
   function tick() {
@@ -54,16 +57,23 @@
   function hideWeather() {
     weatherData = null;
     document.body.classList.add('no-weather');
+    dropWeatherFocus();
+  }
+
+  function dropWeatherFocus() {
+    closeWeek();
+    if (weatherFocused) { weatherFocused = false; updateFocus(); }
   }
 
   function renderWeather(data, at) {
     if (data) { weatherData = data; weatherAt = at || Date.now(); }
     if (weatherData && Date.now() - weatherAt > WEATHER_MAX_AGE) weatherData = null;
     document.body.classList.toggle('no-weather', !weatherData);
-    if (!weatherData) return;
+    if (!weatherData) { dropWeatherFocus(); return; }
     try {
       var v = Logic.weatherView(weatherData, new Date());
       if (v) drawWeather(v); else hideWeather();
+      if (weekOpen) drawWeek();
     } catch (e) {
       hideWeather();
     }
@@ -84,6 +94,29 @@
     }).join('');
     $('sentence').textContent = v.sentence;
     $('sun').innerHTML = Icons.sun + '<span>' + v.sun.text + '</span>';
+  }
+
+  function drawWeek() {
+    var days = Logic.weekView(weatherData, new Date());
+    if (!days) return false;
+    $('week-days').innerHTML = days.map(function (d) {
+      return '<div class="day"><div class="name">' + d.day + '</div><div class="date">' + d.date + '</div>' +
+        Icons.weather[d.icon] + '<div class="label">' + d.label + '</div>' +
+        '<div class="hi">' + d.hi + '°</div><div class="lo">' + d.lo + '°</div>' +
+        (d.rain === null ? '' : '<div class="rain">' + d.rain + '% rain</div>') + '</div>';
+    }).join('');
+    return true;
+  }
+
+  function openWeek() {
+    try { if (!weatherData || !drawWeek()) return; } catch (e) { return; }
+    weekOpen = true;
+    root.classList.add('week-open');
+  }
+
+  function closeWeek() {
+    weekOpen = false;
+    root.classList.remove('week-open');
   }
 
   function setBackground() {
@@ -138,13 +171,16 @@
     if (isBack) e.preventDefault();
     if (pendingInput) { if (isBack) { pendingInput = false; TV.hideInput(); } return; }
     if (inputMode) { if (isBack) exitInput(); return; }
-    if (k === 37) { focus = Logic.moveFocus(focus, -1, TILES.length); updateFocus(); }
+    if (weekOpen) { if (isBack || k === 13) closeWeek(); return; }
+    if (k === 38) { if (weatherData) { weatherFocused = true; updateFocus(); } }
+    else if (k === 40 || ((k === 37 || k === 39) && weatherFocused)) { weatherFocused = false; updateFocus(); }
+    else if (k === 37) { focus = Logic.moveFocus(focus, -1, TILES.length); updateFocus(); }
     else if (k === 39) { focus = Logic.moveFocus(focus, 1, TILES.length); updateFocus(); }
-    else if (k === 13) activate();
+    else if (k === 13) { if (weatherFocused) openWeek(); else activate(); }
   });
 
   document.addEventListener('visibilitychange', function () {
-    if (document.hidden) { pendingInput = false; if (inputMode) exitInput(); }
+    if (document.hidden) { pendingInput = false; if (inputMode) exitInput(); closeWeek(); }
     else { refreshScreen(); refreshWeatherIfStale(); }
   });
 
