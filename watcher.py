@@ -21,7 +21,7 @@ def power_state():
 
 
 def launch(app_id):
-    # The 2023 Samsung firmware ignores ed.apps.launch for Tizen web apps; the REST endpoint works.
+    # On this TV (2023 firmware) ed.apps.launch did not open Tizen web apps; the REST endpoint does.
     req = urllib.request.Request(f"http://{TV}:8001/api/v2/applications/{app_id}", method="POST")
     urllib.request.urlopen(req, timeout=5).read()
 
