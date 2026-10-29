@@ -38,3 +38,44 @@ test('parseLocal reads Open-Meteo local timestamps', () => {
   const d = Logic.parseLocal('2026-10-29T17:05');
   assert.deepStrictEqual([d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes()], [2026, 9, 29, 17, 5]);
 });
+
+const data = require('./fixtures/weather.json');
+
+test('weatherInfo maps codes and swaps night icons', () => {
+  assert.deepStrictEqual(Logic.weatherInfo(0, true),
+    { label: 'Clear', sentence: 'Clear skies and sunshine.', icon: 'sun' });
+  assert.strictEqual(Logic.weatherInfo(0, false).icon, 'moon');
+  assert.strictEqual(Logic.weatherInfo(0, false).sentence, 'Clear skies tonight.');
+  assert.strictEqual(Logic.weatherInfo(2, false).icon, 'partly-night');
+  assert.strictEqual(Logic.weatherInfo(63, true).icon, 'rain');
+  assert.strictEqual(Logic.weatherInfo(75, true).icon, 'snow');
+  assert.strictEqual(Logic.weatherInfo(95, true).label, 'Thunderstorm');
+  assert.strictEqual(Logic.weatherInfo(12345, true).label, 'Overcast'); // unknown code fallback
+});
+
+test('sunLine: before sunrise, daytime, after sunset', () => {
+  assert.deepStrictEqual(Logic.sunLine(new Date(2026, 9, 29, 6, 0), data), { kind: 'sunrise', text: 'Sunrise at 08:12' });
+  assert.deepStrictEqual(Logic.sunLine(new Date(2026, 9, 29, 10, 34), data), { kind: 'sunset', text: 'Sunset at 17:05' });
+  assert.deepStrictEqual(Logic.sunLine(new Date(2026, 9, 29, 19, 0), data), { kind: 'sunrise', text: 'Sunrise at 08:14' });
+});
+
+test('nextHours returns hours strictly after now', () => {
+  const h = Logic.nextHours(data, new Date(2026, 9, 29, 10, 34), 6);
+  assert.deepStrictEqual(h.map(x => x.time), ['11:00', '12:00', '13:00', '14:00', '15:00', '16:00']);
+  assert.deepStrictEqual(h.map(x => x.temp), [15, 16, 16, 17, 17, 16]);
+  assert.deepStrictEqual(h.map(x => x.icon), ['sun', 'sun', 'partly', 'partly', 'cloud', 'rain']);
+});
+
+test('weatherView rounds and assembles everything', () => {
+  const v = Logic.weatherView(data, new Date(2026, 9, 29, 10, 34));
+  assert.strictEqual(v.temp, 14);
+  assert.strictEqual(v.label, 'Clear');
+  assert.strictEqual(v.icon, 'sun');
+  assert.strictEqual(v.hi, 17);
+  assert.strictEqual(v.lo, 11);
+  assert.strictEqual(v.feels, 12);
+  assert.strictEqual(v.wind, 11);
+  assert.strictEqual(v.humidity, 77);
+  assert.strictEqual(v.sun.text, 'Sunset at 17:05');
+  assert.strictEqual(v.hours.length, 6);
+});

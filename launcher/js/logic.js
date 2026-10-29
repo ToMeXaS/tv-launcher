@@ -34,9 +34,76 @@
     return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
   }
 
+  // [codes, label, day sentence, night sentence, icon]
+  var CODES = [
+    [[0], 'Clear', 'Clear skies and sunshine.', 'Clear skies tonight.', 'sun'],
+    [[1], 'Mostly clear', 'Mostly clear skies.', 'Mostly clear skies tonight.', 'sun'],
+    [[2], 'Partly cloudy', 'A mix of sun and cloud.', 'A few clouds tonight.', 'partly'],
+    [[3], 'Overcast', 'Grey and overcast.', 'Grey and overcast.', 'cloud'],
+    [[45, 48], 'Fog', 'Foggy out there.', 'Foggy out there.', 'fog'],
+    [[51, 53, 55, 56, 57], 'Drizzle', 'Light drizzle about.', 'Light drizzle about.', 'rain'],
+    [[61, 63, 65, 66, 67], 'Rain', 'Rainy day, grab an umbrella.', 'A rainy night.', 'rain'],
+    [[71, 73, 75, 77, 85, 86], 'Snow', 'Snow is falling.', 'Snow is falling.', 'snow'],
+    [[80, 81, 82], 'Showers', 'Passing showers.', 'Passing showers.', 'rain'],
+    [[95, 96, 99], 'Thunderstorm', 'Thunderstorms around.', 'Thunderstorms around.', 'thunder']
+  ];
+
+  function weatherInfo(code, isDay) {
+    var row = CODES[3];
+    for (var i = 0; i < CODES.length; i++) {
+      if (CODES[i][0].indexOf(code) !== -1) { row = CODES[i]; break; }
+    }
+    var icon = row[4];
+    if (!isDay && icon === 'sun') icon = 'moon';
+    if (!isDay && icon === 'partly') icon = 'partly-night';
+    return { label: row[1], sentence: isDay ? row[2] : row[3], icon: icon };
+  }
+
+  function sunLine(now, data) {
+    var sunrise = parseLocal(data.daily.sunrise[0]);
+    var sunset = parseLocal(data.daily.sunset[0]);
+    if (now < sunrise) return { kind: 'sunrise', text: 'Sunrise at ' + formatTime(sunrise) };
+    if (now < sunset) return { kind: 'sunset', text: 'Sunset at ' + formatTime(sunset) };
+    return { kind: 'sunrise', text: 'Sunrise at ' + formatTime(parseLocal(data.daily.sunrise[1])) };
+  }
+
+  function nextHours(data, now, count) {
+    var h = data.hourly, out = [];
+    for (var i = 0; i < h.time.length && out.length < count; i++) {
+      var t = parseLocal(h.time[i]);
+      if (t > now) {
+        out.push({
+          time: formatTime(t),
+          temp: Math.round(h.temperature_2m[i]),
+          icon: weatherInfo(h.weather_code[i], h.is_day[i] === 1).icon
+        });
+      }
+    }
+    return out;
+  }
+
+  function weatherView(data, now) {
+    var c = data.current;
+    var info = weatherInfo(c.weather_code, c.is_day === 1);
+    return {
+      temp: Math.round(c.temperature_2m),
+      label: info.label,
+      sentence: info.sentence,
+      icon: info.icon,
+      hi: Math.round(data.daily.temperature_2m_max[0]),
+      lo: Math.round(data.daily.temperature_2m_min[0]),
+      feels: Math.round(c.apparent_temperature),
+      wind: Math.round(c.wind_speed_10m),
+      humidity: Math.round(c.relative_humidity_2m),
+      sun: sunLine(now, data),
+      hours: nextHours(data, now, 6)
+    };
+  }
+
   var Logic = {
     formatTime: formatTime, formatDate: formatDate, greeting: greeting,
-    moveFocus: moveFocus, photoIndex: photoIndex, parseLocal: parseLocal
+    moveFocus: moveFocus, photoIndex: photoIndex, parseLocal: parseLocal,
+    weatherInfo: weatherInfo, sunLine: sunLine, nextHours: nextHours, weatherView: weatherView
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = Logic;
