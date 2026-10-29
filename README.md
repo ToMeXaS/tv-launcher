@@ -32,13 +32,24 @@ Back themselves). Workaround: pin "Home" as the first app in Smart Hub's app row
 
 ## Using it
 
-Left/Right pick a tile, OK opens it, or press 1-7 to open a tile directly. Focus starts on the last tile opened.
-Up focuses the weather card; OK there shows the 7-day forecast, Back closes it. After 3 idle minutes only the photo,
-a big clock and the temperature stay up; any key brings the rest back.
+Left/Right pick a tile, OK opens it, or press 1-9 to open a visible tile directly. Focus starts on the last tile opened.
+Up focuses the weather card; OK there shows the 7-day forecast, Back closes it. Up again focuses the gear next to
+the clock; OK opens Settings. After the ambient delay (3 idle minutes by default) only the photo, a big clock and the
+temperature stay up; any key brings the rest back.
+
+## Settings
+
+- **Tiles**: OK shows/hides a tile. Right then OK picks it up, Up/Down move it, OK drops it. Apps you added have a
+  remove button after the move handle.
+- **Add app**: lists apps installed on the TV that don't have a tile yet; OK adds one at the end.
+- **Display**: ambient delay (Off, 1, 3, 5, 10 min) and the weather card on/off.
+- **Reset**: OK twice restores the default tiles and display options.
+
+Settings are stored on the TV (`localStorage`, key `settings-v1`).
 
 ## Customising
 
-- Tiles and app ids: `launcher/js/tiles.js`
+- Built-in tiles and app ids: `launcher/js/tiles.js` (tile `id`s are stored in settings; don't rename them)
 - Background photos: `launcher/bg/` by day, `launcher/bg/night/` between sunset and sunrise (fetched by `scripts/fetch-backgrounds.py`)
 
 ## Tests
