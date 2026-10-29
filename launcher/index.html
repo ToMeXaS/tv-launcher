@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Home</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="no-weather">
+  <div id="ui">
+    <div class="shade"></div>
+    <header><div class="brand">&#10035; Home</div><div id="clock"></div></header>
+    <section class="hero">
+      <div id="date"></div>
+      <h1 id="greeting"></h1>
+      <p id="sentence" class="wx"></p>
+      <p id="sun" class="wx"></p>
+    </section>
+    <section id="weather" class="card wx">
+      <div class="now">
+        <span id="w-icon"></span><span id="w-temp"></span>
+        <div class="cond"><div id="w-label"></div><div id="w-hilo"></div></div>
+      </div>
+      <div id="w-details"></div>
+      <div id="w-hours"></div>
+    </section>
+    <section id="tiles"></section>
+    <div id="toast"></div>
+  </div>
+  <script src="js/logic.js"></script>
+  <script src="js/icons.js"></script>
+  <script src="js/tiles.js"></script>
+  <script src="js/tv.js"></script>
+  <script src="js/weather.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
