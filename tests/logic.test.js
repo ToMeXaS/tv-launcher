@@ -177,7 +177,7 @@ const B = [
 test('normalizeSettings gives defaults for missing or corrupt input', () => {
   for (const raw of [null, 'x', 42, [], {}]) {
     assert.deepStrictEqual(Logic.normalizeSettings(raw, B),
-      { order: ['hdmi1', 'netflix', 'youtube'], hidden: [], added: {}, ambientMin: 3, weather: true });
+      { order: ['hdmi1', 'netflix', 'youtube'], hidden: [], added: {}, ambientMin: 3, weather: true, background: 'alone' });
   }
 });
 
@@ -195,18 +195,20 @@ test('normalizeSettings keeps valid added apps and rejects malformed ones', () =
       'app:bar': { label: 'Bar' },
       'app:x': { label: 'X', appId: 'y' }
     },
-    ambientMin: 7, weather: 'no'
+    ambientMin: 7, weather: 'no', background: 'gif'
   }, B);
   assert.deepStrictEqual(s.added, { 'app:foo': { label: 'Foo', appId: 'foo', icon: 'file:///foo.png' } });
   assert.deepStrictEqual(s.order, ['app:foo', 'hdmi1', 'netflix', 'youtube']);
   assert.strictEqual(s.ambientMin, 3);
   assert.strictEqual(s.weather, true);
+  assert.strictEqual(s.background, 'alone');
 });
 
 test('normalizeSettings keeps valid display options and never hides every tile', () => {
-  const s = Logic.normalizeSettings({ ambientMin: 0, weather: false, hidden: ['hdmi1', 'netflix', 'youtube'] }, B);
+  const s = Logic.normalizeSettings({ ambientMin: 0, weather: false, background: 'photos', hidden: ['hdmi1', 'netflix', 'youtube'] }, B);
   assert.strictEqual(s.ambientMin, 0);
   assert.strictEqual(s.weather, false);
+  assert.strictEqual(s.background, 'photos');
   assert.deepStrictEqual(s.hidden, []);
 });
 

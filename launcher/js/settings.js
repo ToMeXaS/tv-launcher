@@ -33,7 +33,7 @@ var Settings = (function () {
 
   function tileRows() { return Logic.allTiles(s, TILES); }
   function appRows() { return apps ? Logic.availableApps(apps, s, TILES) : []; }
-  function rowCount() { return [tileRows().length, appRows().length, 2, 1][sec]; }
+  function rowCount() { return [tileRows().length, appRows().length, 3, 1][sec]; }
   function maxCol() { return sec !== 0 ? 0 : tileRows()[row].added ? 2 : 1; }
 
   function open(cb) {
@@ -86,7 +86,9 @@ var Settings = (function () {
       row = Math.max(0, Math.min(row, rowCount() - 1));
       note = 'Added ' + a.label;
     } else if (sec === 2) {
-      save(row === 0 ? Logic.setOption(s, 'ambientMin', Logic.nextAmbient(s.ambientMin)) : Logic.setOption(s, 'weather', !s.weather));
+      save(row === 0 ? Logic.setOption(s, 'ambientMin', Logic.nextAmbient(s.ambientMin)) :
+        row === 1 ? Logic.setOption(s, 'weather', !s.weather) :
+        Logic.setOption(s, 'background', s.background === 'alone' ? 'photos' : 'alone'));
     } else if (!confirmReset) {
       confirmReset = true;
     } else {
@@ -153,7 +155,8 @@ var Settings = (function () {
   function displayPanel() {
     return [
       ['Ambient screen after', s.ambientMin ? s.ambientMin + ' min' : 'Off'],
-      ['Weather card', s.weather ? 'On' : 'Off']
+      ['Weather card', s.weather ? 'On' : 'Off'],
+      ['Background', s.background === 'alone' ? 'Alone' : 'Photos']
     ].map(function (r, i) {
       return '<div class="srow' + (rowFocused(i) ? ' focused' : '') + '"><span class="s-name">' + r[0] + '</span>' +
         '<span class="s-value">' + r[1] + '</span></div>';

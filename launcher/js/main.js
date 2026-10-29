@@ -46,6 +46,7 @@
     document.body.classList.toggle('weather-off', !settings.weather);
     if (zone === 'weather' && !weatherShown()) zone = 'tiles';
     renderTiles();
+    setBackground();
   }
 
   function renderTiles() {
@@ -160,7 +161,8 @@
   function setBackground() {
     var now = new Date();
     var n = Logic.photoIndex(now, BG_COUNT) + 1;
-    var url = 'url(bg/' + (Logic.isNight(now, weatherData) ? 'night/' : '') + (n < 10 ? '0' : '') + n + '.jpg)';
+    var url = settings.background === 'alone' ? 'url(bg/alone.jpg)' :
+      'url(bg/' + (Logic.isNight(now, weatherData) ? 'night/' : '') + (n < 10 ? '0' : '') + n + '.jpg)';
     if (url !== bgUrl) document.body.style.backgroundImage = bgUrl = url;
   }
 

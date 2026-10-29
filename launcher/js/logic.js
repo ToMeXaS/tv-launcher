@@ -152,6 +152,7 @@
   }
 
   var AMBIENT_CHOICES = [0, 1, 3, 5, 10]; // minutes; 0 = never
+  var BACKGROUNDS = ['alone', 'photos']; // 'alone' = the PC's Wallpaper Engine scene, 'photos' = rotating day/night photos
 
   function copyOf(o) {
     var r = {};
@@ -191,7 +192,8 @@
       hidden: hidden,
       added: added,
       ambientMin: AMBIENT_CHOICES.indexOf(s.ambientMin) !== -1 ? s.ambientMin : 3,
-      weather: typeof s.weather === 'boolean' ? s.weather : true
+      weather: typeof s.weather === 'boolean' ? s.weather : true,
+      background: BACKGROUNDS.indexOf(s.background) !== -1 ? s.background : 'alone'
     };
   }
 
