@@ -1,8 +1,15 @@
 # TV Launcher
 
-A custom home screen (Tizen web app) for a Samsung TV (UE55CU8072UXXH): photo background, clock, weather
-for Šiauliai and tiles for Netflix, Twitch, Stremio, YouTube, Moonlight and HDMI inputs. A PC-side watcher relaunches
-it whenever the TV powers on. Design: `docs/superpowers/specs/2026-10-29-tv-launcher-design.md`.
+A custom home screen (Tizen web app) for a Samsung TV (UE55CU8072UXXH): a moving wallpaper background that
+follows the time of day, clock, weather for Šiauliai and tiles for Netflix, Twitch, Stremio, YouTube, Moonlight and
+HDMI inputs. A PC-side watcher relaunches it whenever the TV powers on.
+Design: `docs/superpowers/specs/2026-10-29-tv-launcher-design.md`.
+
+![Home screen](docs/screenshots/home.jpg)
+
+| 7-day forecast (Up, then OK on the weather card) | Settings (gear by the clock) |
+|---|---|
+| ![7-day forecast](docs/screenshots/forecast.jpg) | ![Settings with a dropdown open](docs/screenshots/settings.jpg) |
 
 ## Deploy / redeploy
 
