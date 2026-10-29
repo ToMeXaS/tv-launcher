@@ -151,11 +151,132 @@
     return out;
   }
 
+  var AMBIENT_CHOICES = [0, 1, 3, 5, 10]; // minutes; 0 = never
+
+  function copyOf(o) {
+    var r = {};
+    for (var k in o) r[k] = o[k];
+    return r;
+  }
+
+  function setOption(s, key, value) {
+    var r = copyOf(s);
+    r[key] = value;
+    return r;
+  }
+
+  // Saved settings checked field by field against the built-in tiles; anything missing or malformed takes its default.
+  function normalizeSettings(raw, builtins) {
+    var s = raw && typeof raw === 'object' ? raw : {};
+    var src = s.added && typeof s.added === 'object' ? s.added : {};
+    var added = {};
+    Object.keys(src).forEach(function (id) {
+      var a = src[id];
+      if (a && typeof a.label === 'string' && typeof a.appId === 'string' && id === 'app:' + a.appId) {
+        added[id] = { label: a.label, appId: a.appId, icon: typeof a.icon === 'string' ? a.icon : '' };
+      }
+    });
+    var known = builtins.map(function (t) { return t.id; }).concat(Object.keys(added));
+    var order = [];
+    (Array.isArray(s.order) ? s.order : []).concat(known).forEach(function (id) {
+      if (known.indexOf(id) !== -1 && order.indexOf(id) === -1) order.push(id);
+    });
+    var hidden = [];
+    (Array.isArray(s.hidden) ? s.hidden : []).forEach(function (id) {
+      if (order.indexOf(id) !== -1 && hidden.indexOf(id) === -1) hidden.push(id);
+    });
+    if (hidden.length === order.length) hidden = [];
+    return {
+      order: order,
+      hidden: hidden,
+      added: added,
+      ambientMin: AMBIENT_CHOICES.indexOf(s.ambientMin) !== -1 ? s.ambientMin : 3,
+      weather: typeof s.weather === 'boolean' ? s.weather : true
+    };
+  }
+
+  function builtinById(builtins, id) {
+    for (var i = 0; i < builtins.length; i++) if (builtins[i].id === id) return builtins[i];
+    return null;
+  }
+
+  // Every tile in launch order: built-ins copied, added apps made into glass tiles, each with a hidden flag.
+  function allTiles(s, builtins) {
+    return s.order.map(function (id) {
+      var b = builtinById(builtins, id), a = s.added[id];
+      var t = b ? copyOf(b) : { id: id, label: a.label, appId: a.appId, icon: a.icon, added: true, glass: true };
+      t.hidden = s.hidden.indexOf(id) !== -1;
+      return t;
+    });
+  }
+
+  function visibleTiles(s, builtins) {
+    return allTiles(s, builtins).filter(function (t) { return !t.hidden; });
+  }
+
+  function moveTile(s, id, dir) {
+    var order = s.order.slice(), i = order.indexOf(id), j = i + dir;
+    if (i === -1 || j < 0 || j >= order.length) return s;
+    order[i] = order[j];
+    order[j] = id;
+    return setOption(s, 'order', order);
+  }
+
+  // Unchanged when hiding would leave no tile on the home screen.
+  function toggleHidden(s, id) {
+    if (s.hidden.indexOf(id) !== -1) return setOption(s, 'hidden', s.hidden.filter(function (h) { return h !== id; }));
+    if (s.hidden.length + 1 >= s.order.length) return s;
+    return setOption(s, 'hidden', s.hidden.concat([id]));
+  }
+
+  function addApp(s, app) {
+    var id = 'app:' + app.appId;
+    if (s.order.indexOf(id) !== -1) return s;
+    var added = copyOf(s.added);
+    added[id] = { label: app.label, appId: app.appId, icon: app.icon || '' };
+    return setOption(setOption(s, 'added', added), 'order', s.order.concat([id]));
+  }
+
+  // Only added apps can be removed; unchanged when it is the last visible tile.
+  function removeApp(s, id) {
+    if (!s.added[id]) return s;
+    var hidden = s.hidden.filter(function (h) { return h !== id; });
+    if (hidden.length >= s.order.length - 1) return s;
+    var added = copyOf(s.added);
+    delete added[id];
+    var r = setOption(s, 'added', added);
+    r.order = s.order.filter(function (o) { return o !== id; });
+    r.hidden = hidden;
+    return r;
+  }
+
+  // Installed apps that have no tile yet (hidden tiles count as tiles), sorted by name.
+  function availableApps(apps, s, builtins) {
+    var tiled = allTiles(s, builtins).map(function (t) { return t.appId; });
+    return apps.filter(function (a) { return tiled.indexOf(a.appId) === -1; }).sort(function (a, b) {
+      var x = a.label.toLowerCase(), y = b.label.toLowerCase();
+      return x < y ? -1 : x > y ? 1 : 0;
+    });
+  }
+
+  function nextAmbient(min) {
+    return AMBIENT_CHOICES[(AMBIENT_CHOICES.indexOf(min) + 1) % AMBIENT_CHOICES.length];
+  }
+
+  var HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, function (c) { return HTML_ESCAPES[c]; });
+  }
+
   var Logic = {
     formatTime: formatTime, formatDate: formatDate, greeting: greeting,
     moveFocus: moveFocus, numberTile: numberTile, photoIndex: photoIndex, parseLocal: parseLocal,
     weatherInfo: weatherInfo, todayIndex: todayIndex, sunLine: sunLine, isNight: isNight, nextHours: nextHours, weatherView: weatherView,
-    weekView: weekView
+    weekView: weekView,
+    normalizeSettings: normalizeSettings, allTiles: allTiles, visibleTiles: visibleTiles, moveTile: moveTile,
+    toggleHidden: toggleHidden, addApp: addApp, removeApp: removeApp, availableApps: availableApps,
+    nextAmbient: nextAmbient, setOption: setOption, escapeHtml: escapeHtml
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = Logic;

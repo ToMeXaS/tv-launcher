@@ -167,3 +167,117 @@ test('numberTile maps digit keys 1-9 to tile indexes within range', () => {
   assert.strictEqual(Logic.numberTile(48, 7), -1); // '0'
   assert.strictEqual(Logic.numberTile(13, 7), -1);
 });
+
+const B = [
+  { id: 'hdmi1', label: 'HDMI 1', input: 1 },
+  { id: 'netflix', label: 'Netflix', appId: 'org.tizen.netflix-app' },
+  { id: 'youtube', label: 'YouTube', appId: 'yt' }
+];
+
+test('normalizeSettings gives defaults for missing or corrupt input', () => {
+  for (const raw of [null, 'x', 42, [], {}]) {
+    assert.deepStrictEqual(Logic.normalizeSettings(raw, B),
+      { order: ['hdmi1', 'netflix', 'youtube'], hidden: [], added: {}, ambientMin: 3, weather: true });
+  }
+});
+
+test('normalizeSettings keeps saved order, drops unknown ids and appends new built-ins', () => {
+  const s = Logic.normalizeSettings({ order: ['youtube', 'gone', 'hdmi1', 'youtube'], hidden: ['gone', 'hdmi1'] }, B);
+  assert.deepStrictEqual(s.order, ['youtube', 'hdmi1', 'netflix']);
+  assert.deepStrictEqual(s.hidden, ['hdmi1']);
+});
+
+test('normalizeSettings keeps valid added apps and rejects malformed ones', () => {
+  const s = Logic.normalizeSettings({
+    order: ['app:foo', 'hdmi1'],
+    added: {
+      'app:foo': { label: 'Foo', appId: 'foo', icon: 'file:///foo.png' },
+      'app:bar': { label: 'Bar' },
+      'app:x': { label: 'X', appId: 'y' }
+    },
+    ambientMin: 7, weather: 'no'
+  }, B);
+  assert.deepStrictEqual(s.added, { 'app:foo': { label: 'Foo', appId: 'foo', icon: 'file:///foo.png' } });
+  assert.deepStrictEqual(s.order, ['app:foo', 'hdmi1', 'netflix', 'youtube']);
+  assert.strictEqual(s.ambientMin, 3);
+  assert.strictEqual(s.weather, true);
+});
+
+test('normalizeSettings keeps valid display options and never hides every tile', () => {
+  const s = Logic.normalizeSettings({ ambientMin: 0, weather: false, hidden: ['hdmi1', 'netflix', 'youtube'] }, B);
+  assert.strictEqual(s.ambientMin, 0);
+  assert.strictEqual(s.weather, false);
+  assert.deepStrictEqual(s.hidden, []);
+});
+
+test('allTiles and visibleTiles build tiles in order with hidden flags', () => {
+  let s = Logic.normalizeSettings({ order: ['youtube', 'hdmi1', 'netflix'], hidden: ['hdmi1'] }, B);
+  s = Logic.addApp(s, { appId: 'foo', label: 'Foo', icon: '' });
+  const all = Logic.allTiles(s, B);
+  assert.deepStrictEqual(all.map(t => [t.id, t.hidden]),
+    [['youtube', false], ['hdmi1', true], ['netflix', false], ['app:foo', false]]);
+  assert.deepStrictEqual(all[3], { id: 'app:foo', label: 'Foo', appId: 'foo', icon: '', added: true, glass: true, hidden: false });
+  assert.deepStrictEqual(Logic.visibleTiles(s, B).map(t => t.id), ['youtube', 'netflix', 'app:foo']);
+  assert.strictEqual(B[1].hidden, undefined); // built-ins are copied, not changed
+});
+
+test('moveTile swaps with the neighbour and stops at both ends', () => {
+  const s = Logic.normalizeSettings(null, B);
+  assert.deepStrictEqual(Logic.moveTile(s, 'netflix', -1).order, ['netflix', 'hdmi1', 'youtube']);
+  assert.deepStrictEqual(Logic.moveTile(s, 'netflix', 1).order, ['hdmi1', 'youtube', 'netflix']);
+  assert.strictEqual(Logic.moveTile(s, 'hdmi1', -1), s);
+  assert.strictEqual(Logic.moveTile(s, 'youtube', 1), s);
+  assert.deepStrictEqual(s.order, ['hdmi1', 'netflix', 'youtube']);
+});
+
+test('toggleHidden hides and shows, but never the last visible tile', () => {
+  const s = Logic.normalizeSettings(null, B);
+  const a = Logic.toggleHidden(s, 'netflix');
+  assert.deepStrictEqual(a.hidden, ['netflix']);
+  assert.deepStrictEqual(Logic.toggleHidden(a, 'netflix').hidden, []);
+  const b = Logic.toggleHidden(a, 'hdmi1');
+  assert.strictEqual(Logic.toggleHidden(b, 'youtube'), b);
+  assert.deepStrictEqual(s.hidden, []);
+});
+
+test('addApp appends once; removeApp drops only added apps', () => {
+  const s = Logic.normalizeSettings(null, B);
+  const a = Logic.addApp(s, { appId: 'foo', label: 'Foo', icon: 'i.png' });
+  assert.deepStrictEqual(a.order, ['hdmi1', 'netflix', 'youtube', 'app:foo']);
+  assert.deepStrictEqual(a.added['app:foo'], { label: 'Foo', appId: 'foo', icon: 'i.png' });
+  assert.strictEqual(Logic.addApp(a, { appId: 'foo', label: 'Foo' }), a);
+  const r = Logic.removeApp(Logic.toggleHidden(a, 'app:foo'), 'app:foo');
+  assert.deepStrictEqual(r.order, ['hdmi1', 'netflix', 'youtube']);
+  assert.deepStrictEqual(r.hidden, []);
+  assert.deepStrictEqual(r.added, {});
+  assert.strictEqual(Logic.removeApp(a, 'netflix'), a);
+  assert.deepStrictEqual(s.added, {});
+});
+
+test('removeApp refuses to remove the last visible tile', () => {
+  let s = Logic.addApp(Logic.normalizeSettings(null, B), { appId: 'foo', label: 'Foo' });
+  s = Logic.toggleHidden(Logic.toggleHidden(Logic.toggleHidden(s, 'hdmi1'), 'netflix'), 'youtube');
+  assert.deepStrictEqual(s.hidden, ['hdmi1', 'netflix', 'youtube']);
+  assert.strictEqual(Logic.removeApp(s, 'app:foo'), s);
+});
+
+test('availableApps drops apps that already have a tile and sorts by name', () => {
+  const s = Logic.toggleHidden(Logic.normalizeSettings(null, B), 'youtube'); // hidden still counts as tiled
+  const apps = [{ appId: 'z', label: 'zattoo' }, { appId: 'yt', label: 'YouTube' }, { appId: 'a', label: 'Apple TV' }];
+  assert.deepStrictEqual(Logic.availableApps(apps, s, B).map(a => a.appId), ['a', 'z']);
+});
+
+test('nextAmbient cycles Off, 1, 3, 5, 10 minutes', () => {
+  assert.deepStrictEqual([0, 1, 3, 5, 10, 7].map(Logic.nextAmbient), [1, 3, 5, 10, 0, 0]);
+});
+
+test('setOption returns a changed copy', () => {
+  const s = Logic.normalizeSettings(null, B);
+  assert.strictEqual(Logic.setOption(s, 'weather', false).weather, false);
+  assert.strictEqual(s.weather, true);
+});
+
+test('escapeHtml escapes markup characters', () => {
+  assert.strictEqual(Logic.escapeHtml('<a href="x">Tom & Jerry\'s</a>'),
+    '&lt;a href=&quot;x&quot;&gt;Tom &amp; Jerry&#39;s&lt;/a&gt;');
+});
