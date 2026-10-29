@@ -52,5 +52,5 @@ header {
 }
 #toast.show { opacity: 1; }
 body.no-weather .wx { display: none; }
-body.input-mode { background: transparent !important; }
-body.input-mode #ui { display: none; }
+html.input-mode, html.input-mode body { background: transparent !important; }
+html.input-mode #ui { display: none; }

@@ -4,20 +4,28 @@ var TV = (function () {
 
   function launchApp(appId, onError) {
     if (!hasTizen) { console.log('launch', appId); return; }
-    tizen.application.launch(appId, null, function (e) { onError(e.message); });
+    try {
+      tizen.application.launch(appId, null, function (e) { onError(e.message); });
+    } catch (e) { onError(e.message || String(e)); }
   }
 
   function showInput(n, onShown, onError) {
     if (!hasTizen) { console.log('input', n); onShown(); return; }
-    tizen.systeminfo.getPropertyValue('VIDEOSOURCE', function (s) {
-      var all = s.connected.concat(s.disconnected || []);
-      var src = all.filter(function (x) { return x.type === 'HDMI' && x.number === n; })[0];
-      if (!src) { onError('HDMI ' + n + ' not found'); return; }
-      tizen.tvwindow.setSource(src, function () {
-        tizen.tvwindow.show(onShown, function (e) { onError(e.message); },
-          ['0px', '0px', '1920px', '1080px'], 'MAIN');
-      }, function (e) { onError(e.message); }, 'MAIN');
-    }, function (e) { onError(e.message); });
+    function fail(e) { onError((e && e.message) || String(e)); }
+    try {
+      tizen.systeminfo.getPropertyValue('VIDEOSOURCE', function (s) {
+        try {
+          var all = s.connected.concat(s.disconnected || []);
+          var src = all.filter(function (x) { return x.type === 'HDMI' && x.number === n; })[0];
+          if (!src) { onError('HDMI ' + n + ' not found'); return; }
+          tizen.tvwindow.setSource(src, function () {
+            try {
+              tizen.tvwindow.show(onShown, fail, ['0px', '0px', '1920px', '1080px'], 'MAIN');
+            } catch (e) { fail(e); }
+          }, fail, 'MAIN');
+        } catch (e) { fail(e); }
+      }, fail);
+    } catch (e) { fail(e); }
   }
 
   function hideInput() {

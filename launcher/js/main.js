@@ -4,6 +4,8 @@
   var BACK = [10009, 8, 27]; // Tizen Back; Backspace/Escape when previewing in a browser
   var focus = 0;
   var inputMode = false;
+  var pendingInput = false;
+  var root = document.documentElement;
   var weatherData = null;
 
   function $(id) { return document.getElementById(id); }
@@ -49,7 +51,15 @@
     if (data) weatherData = data;
     document.body.classList.toggle('no-weather', !weatherData);
     if (!weatherData) return;
-    var v = Logic.weatherView(weatherData, new Date());
+    try {
+      drawWeather(Logic.weatherView(weatherData, new Date()));
+    } catch (e) {
+      weatherData = null;
+      document.body.classList.add('no-weather');
+    }
+  }
+
+  function drawWeather(v) {
     $('w-icon').innerHTML = Icons.weather[v.icon];
     $('w-temp').textContent = v.temp + '°';
     $('w-label').textContent = v.label;
@@ -75,19 +85,29 @@
     showError.timer = setTimeout(function () { el.classList.remove('show'); }, 4000);
   }
 
-  function enterInput() { inputMode = true; document.body.classList.add('input-mode'); }
+  function enterInput() {
+    if (!pendingInput) { TV.hideInput(); return; } // cancelled by Back while pending
+    pendingInput = false;
+    inputMode = true;
+    root.classList.add('input-mode');
+  }
+
+  function inputFailed(msg) { pendingInput = false; showError(msg); }
 
   function exitInput() {
     TV.hideInput();
     inputMode = false;
-    document.body.classList.remove('input-mode');
+    root.classList.remove('input-mode');
   }
 
   function activate() {
     var t = TILES[focus];
     saveFocus();
     if (t.appId) TV.launchApp(t.appId, showError);
-    else TV.showInput(t.input, enterInput, showError);
+    else {
+      pendingInput = true;
+      TV.showInput(t.input, enterInput, inputFailed);
+    }
   }
 
   function refreshScreen() { tick(); setBackground(); renderWeather(); }
@@ -96,6 +116,7 @@
     var k = e.keyCode;
     var isBack = BACK.indexOf(k) !== -1;
     if (isBack) e.preventDefault();
+    if (pendingInput) { if (isBack) { pendingInput = false; TV.hideInput(); } return; }
     if (inputMode) { if (isBack) exitInput(); return; }
     if (k === 37) { focus = Logic.moveFocus(focus, -1, TILES.length); updateFocus(); }
     else if (k === 39) { focus = Logic.moveFocus(focus, 1, TILES.length); updateFocus(); }
@@ -103,7 +124,7 @@
   });
 
   document.addEventListener('visibilitychange', function () {
-    if (document.hidden) { if (inputMode) exitInput(); }
+    if (document.hidden) { pendingInput = false; if (inputMode) exitInput(); }
     else refreshScreen();
   });
 
