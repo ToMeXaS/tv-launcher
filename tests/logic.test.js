@@ -139,11 +139,11 @@ test('weatherView returns null when today has no daily row', () => {
   assert.strictEqual(Logic.weatherView(data, new Date(2026, 9, 28, 9, 0)), null);
 });
 
-test('weekView lists days from today with rounded temps and rain chance', () => {
+test('weekView lists days from today with rounded temps, rain and wind', () => {
   const w = Logic.weekView(data, new Date(2026, 9, 29, 10, 34));
   assert.deepStrictEqual(w, [
-    { day: 'Today', date: '29 Oct', icon: 'partly', label: 'Partly cloudy', hi: 17, lo: 11, rain: 10 },
-    { day: 'Fri', date: '30 Oct', icon: 'rain', label: 'Rain', hi: 12, lo: 6, rain: 85 }
+    { day: 'Today', date: '29 Oct', icon: 'partly', label: 'Partly cloudy', hi: 17, lo: 11, rain: 10, mm: 0, wind: 15 },
+    { day: 'Fri', date: '30 Oct', icon: 'rain', label: 'Rain', hi: 12, lo: 6, rain: 85, mm: 4.3, wind: 22 }
   ]);
 });
 
@@ -154,10 +154,19 @@ test('weekView skips past days and is null without a row for today', () => {
   assert.strictEqual(Logic.weekView(data, new Date(2026, 9, 31, 9, 0)), null);
 });
 
-test('weekView tolerates missing rain chance', () => {
+test('weekView tolerates missing rain and wind', () => {
   const d = JSON.parse(JSON.stringify(data));
   delete d.daily.precipitation_probability_max;
-  assert.strictEqual(Logic.weekView(d, new Date(2026, 9, 29, 10, 0))[0].rain, null);
+  delete d.daily.precipitation_sum;
+  delete d.daily.wind_speed_10m_max;
+  const day = Logic.weekView(d, new Date(2026, 9, 29, 10, 0))[0];
+  assert.deepStrictEqual([day.rain, day.mm, day.wind], [null, null, null]);
+});
+
+test('weekChart puts days at column centres on one shared temperature scale', () => {
+  const pts = Logic.weekChart([{ hi: 10, lo: 4 }, { hi: 7, lo: 0 }], 200, 120, 10);
+  assert.deepStrictEqual(pts, [{ x: 50, hi: 10, lo: 70 }, { x: 150, hi: 40, lo: 110 }]);
+  assert.deepStrictEqual(Logic.weekChart([{ hi: 5, lo: 5 }], 100, 50, 5), [{ x: 50, hi: 5, lo: 5 }]);
 });
 
 test('numberTile maps digit keys 1-9 to tile indexes within range', () => {

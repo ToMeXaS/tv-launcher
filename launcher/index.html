@@ -28,7 +28,13 @@
     <section id="tiles"></section>
     <section id="week">
       <h2>Next 7 days &middot; <span id="week-place"></span></h2>
-      <div id="week-days"></div>
+      <div id="week-body">
+        <div class="today-band"></div>
+        <div id="week-days" class="week-row"></div>
+        <svg id="week-chart" width="1680" height="300" viewBox="0 0 1680 300"></svg>
+        <div id="week-rain" class="week-row"></div>
+        <div id="week-wind" class="week-row"></div>
+      </div>
       <div class="hint">Back to close</div>
     </section>
     <section id="settings">

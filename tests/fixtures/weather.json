@@ -12,6 +12,7 @@
     "time": ["2026-10-29","2026-10-30"],
     "temperature_2m_max": [17.2, 12.0], "temperature_2m_min": [10.6, 6.1],
     "weather_code": [2, 61], "precipitation_probability_max": [10, 85],
+    "precipitation_sum": [0, 4.26], "wind_speed_10m_max": [14.6, 22.1],
     "sunrise": ["2026-10-29T08:12", "2026-10-30T08:14"],
     "sunset": ["2026-10-29T17:05", "2026-10-30T17:03"]
   }

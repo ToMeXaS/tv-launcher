@@ -156,14 +156,53 @@
     $('sun').innerHTML = Icons.sun + '<span>' + v.sun.text + '</span>';
   }
 
+  var CHART_W = 1680, CHART_H = 300, CHART_PAD = 56;
+
+  // Smooth SVG path through points (Catmull-Rom as cubic Béziers); y picks the hi or lo line.
+  function curve(pts, y) {
+    var d = 'M' + pts[0].x + ' ' + y(pts[0]);
+    for (var i = 0; i < pts.length - 1; i++) {
+      var p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+      d += ' C' + (p1.x + (p2.x - p0.x) / 6) + ' ' + (y(p1) + (y(p2) - y(p0)) / 6) + ' ' +
+        (p2.x - (p3.x - p1.x) / 6) + ' ' + (y(p2) - (y(p3) - y(p1)) / 6) + ' ' + p2.x + ' ' + y(p2);
+    }
+    return d;
+  }
+
+  function drawChart(days) {
+    var pts = Logic.weekChart(days, CHART_W, CHART_H, CHART_PAD);
+    function hi(p) { return p.hi; }
+    function lo(p) { return p.lo; }
+    var back = pts.slice().reverse();
+    var svg = '<defs><linearGradient id="wk-band" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="#FFB86B" stop-opacity=".28"/><stop offset="1" stop-color="#8EC9FF" stop-opacity=".2"/>' +
+      '</linearGradient></defs>' +
+      '<path d="' + curve(pts, hi) + ' L' + curve(back, lo).slice(1) + ' Z" fill="url(#wk-band)"/>' +
+      '<path class="hi" d="' + curve(pts, hi) + '"/><path class="lo" d="' + curve(pts, lo) + '"/>';
+    pts.forEach(function (p, i) {
+      svg += '<circle class="hi" cx="' + p.x + '" cy="' + p.hi + '" r="8"/>' +
+        '<circle class="lo" cx="' + p.x + '" cy="' + p.lo + '" r="8"/>' +
+        '<text class="hi" x="' + p.x + '" y="' + (p.hi - 22) + '">' + days[i].hi + '°</text>' +
+        '<text class="lo" x="' + p.x + '" y="' + (p.lo + 46) + '">' + days[i].lo + '°</text>';
+    });
+    $('week-chart').innerHTML = svg;
+  }
+
   function drawWeek() {
     var days = Logic.weekView(weatherData, now());
     if (!days) return false;
     $('week-days').innerHTML = days.map(function (d) {
-      return '<div class="day"><div class="name">' + d.day + '</div><div class="date">' + d.date + '</div>' +
-        Icons.weather[d.icon] + '<div class="label">' + d.label + '</div>' +
-        '<div class="hi">' + d.hi + '°</div><div class="lo">' + d.lo + '°</div>' +
-        (d.rain === null ? '' : '<div class="rain">' + d.rain + '% rain</div>') + '</div>';
+      return '<div><div class="name">' + d.day + '</div><div class="date">' + d.date + '</div>' +
+        Icons.weather[d.icon] + '<div class="label">' + d.label + '</div></div>';
+    }).join('');
+    drawChart(days);
+    $('week-rain').innerHTML = days.map(function (d) {
+      if (d.rain === null) return '<div></div>';
+      return '<div><div class="bar"><i style="height:' + d.rain + '%"></i></div>' +
+        '<div class="pct">' + d.rain + '%</div><div class="mm">' + (d.mm ? d.mm + ' mm' : '') + '</div></div>';
+    }).join('');
+    $('week-wind').innerHTML = days.map(function (d) {
+      return '<div>' + (d.wind === null ? '' : 'Wind ' + d.wind + ' km/h') + '</div>';
     }).join('');
     return true;
   }

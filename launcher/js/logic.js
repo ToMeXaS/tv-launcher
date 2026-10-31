@@ -139,7 +139,7 @@
   function weekView(data, now) {
     var idx = todayIndex(data, now);
     if (idx === -1) return null;
-    var d = data.daily, rain = d.precipitation_probability_max, out = [];
+    var d = data.daily, rain = d.precipitation_probability_max, mm = d.precipitation_sum, wind = d.wind_speed_10m_max, out = [];
     for (var i = idx; i < d.time.length; i++) {
       var date = parseLocal(d.time[i] + 'T00:00');
       var info = weatherInfo(d.weather_code[i], true);
@@ -150,10 +150,24 @@
         label: info.label,
         hi: Math.round(d.temperature_2m_max[i]),
         lo: Math.round(d.temperature_2m_min[i]),
-        rain: rain && rain[i] != null ? Math.round(rain[i]) : null
+        rain: rain && rain[i] != null ? Math.round(rain[i]) : null,
+        mm: mm && mm[i] != null ? Math.round(mm[i] * 10) / 10 : null,
+        wind: wind && wind[i] != null ? Math.round(wind[i]) : null
       });
     }
     return out;
+  }
+
+  // Chart points for weekView days: x at each column's centre across width, highs and lows on one
+  // shared scale between pad and height - pad (warmest at the top).
+  function weekChart(days, width, height, pad) {
+    var max = Math.max.apply(null, days.map(function (d) { return d.hi; }));
+    var min = Math.min.apply(null, days.map(function (d) { return d.lo; }));
+    var span = max - min || 1;
+    function y(t) { return Math.round(pad + (max - t) / span * (height - 2 * pad)); }
+    return days.map(function (d, i) {
+      return { x: Math.round((i + 0.5) * width / days.length), hi: y(d.hi), lo: y(d.lo) };
+    });
   }
 
   // Settings picked from a dropdown, in menu order.
@@ -277,7 +291,8 @@
       '&timezone=' + encodeURIComponent(timeZone(s)) + '&forecast_days=7&wind_speed_unit=kmh' +
       '&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day' +
       '&hourly=temperature_2m,weather_code,is_day' +
-      '&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,weather_code,precipitation_probability_max';
+      '&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,weather_code,precipitation_probability_max,' +
+      'precipitation_sum,wind_speed_10m_max';
   }
 
   function copyOf(o) {
@@ -411,7 +426,7 @@
     formatTime: formatTime, formatDate: formatDate, greeting: greeting,
     moveFocus: moveFocus, numberTile: numberTile, photoIndex: photoIndex, alonePeriod: alonePeriod, parseLocal: parseLocal,
     weatherInfo: weatherInfo, todayIndex: todayIndex, sunLine: sunLine, isNight: isNight, nextHours: nextHours, weatherView: weatherView,
-    weekView: weekView,
+    weekView: weekView, weekChart: weekChart,
     normalizeSettings: normalizeSettings, allTiles: allTiles, visibleTiles: visibleTiles, moveTile: moveTile,
     toggleHidden: toggleHidden, addApp: addApp, removeApp: removeApp, availableApps: availableApps, isUserApp: isUserApp,
     choices: choices, choiceIndex: choiceIndex, stepChoice: stepChoice, stepOption: stepOption, chooseOption: chooseOption, setOption: setOption, escapeHtml: escapeHtml,
