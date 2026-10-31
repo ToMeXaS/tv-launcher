@@ -50,16 +50,24 @@ temperature stay up; any key brings the rest back.
 
 ## Settings
 
-- **Tiles**: OK shows/hides a tile. Right then OK picks it up, Up/Down move it, OK drops it. Apps you added have a
-  remove button after the move handle.
-- **Add app**: lists apps installed on the TV that don't have a tile yet; OK adds one at the end. Only regular installed apps are listed (system apps, and a few Samsung apps like SmartThings, are left out).
+Up/Down pick a section, Right or OK enters it, Left or Back goes back.
+
+- **Home tiles**: OK on a tile opens its menu: Show/Hide on the home screen, Move (Up/Down carry it, OK drops it) and,
+  for apps you added, Remove tile. At least one tile always stays visible.
+- **Add apps**: lists apps installed on the TV that don't have a tile yet; OK adds one at the end. Only regular installed apps are listed (system apps, and a few Samsung apps like SmartThings, are left out).
 - **Display**: ambient delay (Off, 1, 3, 5, 10 min), the weather card on/off, and the background (Alone, the PC's Wallpaper Engine scene as moving 30 s loops that follow the time of day: morning 04-09, day 09-17, dusk 17-20, night 20-04; or the rotating day/night photos).
   The Alone wallpaper isn't included in this repo (it's someone else's artwork). Without it the launcher uses the
   photos. If you own the [Alone wallpaper](https://steamcommunity.com/sharedfiles/filedetails/?id=3448877775) in
   Wallpaper Engine, record it into `launcher/bg/alone/` with `powershell -ExecutionPolicy Bypass -File scripts/record-wallpaper.ps1`
   (needs ffmpeg; keep the mouse still for ~5 min; it raises Wallpaper Engine's FPS limit while recording and restores it after).
-  Ambient delay and Background are dropdowns: OK opens the list, Up/Down chooses, OK selects, Back cancels. OK flips the weather card.
-- **Reset**: OK twice restores the default tiles and display options.
+- **Location**: country and city for the weather (22 countries across Europe, plus the US, Canada, Japan and Australia; Šiauliai by default), and the
+  time zone the clock and forecast use: the city's own zone (the default), UTC or any other listed zone. A new country
+  starts at its first city.
+
+On Display and Location rows, Left/Right step through the choices; OK opens the full list (Up/Down chooses, OK
+selects, Back or Left cancels) and flips the weather card on/off.
+
+- **Reset**: OK twice restores the default tiles, display options and location.
 
 Settings are stored on the TV (`localStorage`, key `settings-v1`).
 
