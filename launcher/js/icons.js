@@ -43,7 +43,17 @@ var Icons = (function () {
     'L3.4 36.5L3.4 27.5L11.5 27.3A21 21 0 0 1 14.2 20.9L8.5 15L15 8.5L20.9 14.2A21 21 0 0 1 27.3 11.5Z' +
     'M41 32A9 9 0 1 0 23 32A9 9 0 1 0 41 32Z"/></svg>';
   var move = '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M32 6l13 16H19zM32 58L19 42h26z" fill="#fff"/></svg>';
-  var remove = '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M18 18l28 28M46 18L18 46" stroke="#fff" stroke-width="6" stroke-linecap="round"/></svg>';
+  // Settings menu: one line icon per section, in the order of Settings' SECTIONS.
+  var line = function (body) { return '<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">' + body + '</svg>'; };
+  var sections = {
+    tiles: line('<rect x="8" y="14" width="20" height="16" rx="3"/><rect x="36" y="14" width="20" height="16" rx="3"/><rect x="8" y="38" width="20" height="16" rx="3"/><rect x="36" y="38" width="20" height="16" rx="3"/>'),
+    add: line('<rect x="8" y="8" width="48" height="48" rx="12"/><path d="M32 20v24M20 32h24"/>'),
+    display: line('<rect x="6" y="10" width="52" height="34" rx="4"/><path d="M24 54h16M32 44v10"/>'),
+    location: line('<path d="M32 58S14 40 14 26a18 18 0 0 1 36 0c0 14-18 32-18 32z"/><circle cx="32" cy="26" r="6"/>'),
+    reset: line('<path d="M14 32a18 18 0 1 0 6-13.4"/><path d="M14 8v12h12"/>')
+  };
+  var chevron = line('<path d="M18 26l14 14 14-14"/>'); // on settings rows that open a dropdown
+  var check = line('<path d="M16 33l11 11 21-22"/>'); // the current choice in a dropdown
 
   // Built-in tiles use their drawn logo; added apps use the TV's icon, or their first letter when it won't load.
   function tileLogo(t) {
@@ -54,5 +64,5 @@ var Icons = (function () {
     return '<img src="' + Logic.escapeHtml(t.icon) + '" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'\'">' + letter;
   }
 
-  return { weather: weather, sun: sunsetIcon, app: app, gear: gear, move: move, remove: remove, tileLogo: tileLogo };
+  return { weather: weather, sun: sunsetIcon, app: app, gear: gear, move: move, sections: sections, chevron: chevron, check: check, tileLogo: tileLogo };
 })();

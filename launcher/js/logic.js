@@ -167,11 +167,117 @@
     ]
   };
 
-  function choices(key) { return CHOICES[key]; }
+  // Weather locations: [country, [city, latitude, longitude, IANA time zone], ...]; the first city is the country's default.
+  var PLACES = [
+    ['Lithuania', ['Šiauliai', 55.93, 23.31, 'Europe/Vilnius'], ['Vilnius', 54.69, 25.28, 'Europe/Vilnius'],
+      ['Kaunas', 54.90, 23.89, 'Europe/Vilnius'], ['Klaipėda', 55.71, 21.13, 'Europe/Vilnius'], ['Panevėžys', 55.73, 24.36, 'Europe/Vilnius']],
+    ['Latvia', ['Riga', 56.95, 24.11, 'Europe/Riga'], ['Daugavpils', 55.87, 26.54, 'Europe/Riga'], ['Liepāja', 56.51, 21.01, 'Europe/Riga']],
+    ['Estonia', ['Tallinn', 59.44, 24.75, 'Europe/Tallinn'], ['Tartu', 58.38, 26.72, 'Europe/Tallinn']],
+    ['Poland', ['Warsaw', 52.23, 21.01, 'Europe/Warsaw'], ['Kraków', 50.06, 19.94, 'Europe/Warsaw'], ['Gdańsk', 54.35, 18.65, 'Europe/Warsaw'], ['Wrocław', 51.11, 17.04, 'Europe/Warsaw']],
+    ['Finland', ['Helsinki', 60.17, 24.94, 'Europe/Helsinki'], ['Tampere', 61.50, 23.79, 'Europe/Helsinki']],
+    ['Sweden', ['Stockholm', 59.33, 18.07, 'Europe/Stockholm'], ['Gothenburg', 57.71, 11.97, 'Europe/Stockholm']],
+    ['Norway', ['Oslo', 59.91, 10.75, 'Europe/Oslo'], ['Bergen', 60.39, 5.32, 'Europe/Oslo']],
+    ['Denmark', ['Copenhagen', 55.68, 12.57, 'Europe/Copenhagen'], ['Aarhus', 56.16, 10.20, 'Europe/Copenhagen']],
+    ['Germany', ['Berlin', 52.52, 13.40, 'Europe/Berlin'], ['Munich', 48.14, 11.58, 'Europe/Berlin'], ['Hamburg', 53.55, 9.99, 'Europe/Berlin'], ['Frankfurt', 50.11, 8.68, 'Europe/Berlin']],
+    ['Netherlands', ['Amsterdam', 52.37, 4.90, 'Europe/Amsterdam'], ['Rotterdam', 51.92, 4.48, 'Europe/Amsterdam']],
+    ['United Kingdom', ['London', 51.51, -0.13, 'Europe/London'], ['Manchester', 53.48, -2.24, 'Europe/London'], ['Edinburgh', 55.95, -3.19, 'Europe/London']],
+    ['Ireland', ['Dublin', 53.35, -6.26, 'Europe/Dublin'], ['Cork', 51.90, -8.47, 'Europe/Dublin']],
+    ['France', ['Paris', 48.86, 2.35, 'Europe/Paris'], ['Lyon', 45.76, 4.84, 'Europe/Paris'], ['Marseille', 43.30, 5.37, 'Europe/Paris']],
+    ['Spain', ['Madrid', 40.42, -3.70, 'Europe/Madrid'], ['Barcelona', 41.39, 2.17, 'Europe/Madrid'], ['Valencia', 39.47, -0.38, 'Europe/Madrid']],
+    ['Portugal', ['Lisbon', 38.72, -9.14, 'Europe/Lisbon'], ['Porto', 41.15, -8.61, 'Europe/Lisbon']],
+    ['Italy', ['Rome', 41.90, 12.50, 'Europe/Rome'], ['Milan', 45.46, 9.19, 'Europe/Rome'], ['Naples', 40.85, 14.27, 'Europe/Rome']],
+    ['Czechia', ['Prague', 50.08, 14.44, 'Europe/Prague'], ['Brno', 49.20, 16.61, 'Europe/Prague']],
+    ['Ukraine', ['Kyiv', 50.45, 30.52, 'Europe/Kyiv'], ['Lviv', 49.84, 24.03, 'Europe/Kyiv']],
+    ['United States', ['New York', 40.71, -74.01, 'America/New_York'], ['Chicago', 41.88, -87.63, 'America/Chicago'],
+      ['Denver', 39.74, -104.99, 'America/Denver'], ['Los Angeles', 34.05, -118.24, 'America/Los_Angeles']],
+    ['Canada', ['Toronto', 43.65, -79.38, 'America/Toronto'], ['Vancouver', 49.28, -123.12, 'America/Vancouver']],
+    ['Japan', ['Tokyo', 35.68, 139.69, 'Asia/Tokyo'], ['Osaka', 34.69, 135.50, 'Asia/Tokyo']],
+    ['Australia', ['Sydney', -33.87, 151.21, 'Australia/Sydney'], ['Melbourne', -37.81, 144.96, 'Australia/Melbourne']]
+  ];
 
-  function choiceIndex(key, value) {
-    for (var i = 0; i < CHOICES[key].length; i++) if (CHOICES[key][i].value === value) return i;
+  // UTC plus every zone a place uses, in place order; 'auto' (the city's zone) is offered first.
+  var ZONES = ['UTC'];
+  PLACES.forEach(function (p) {
+    for (var i = 1; i < p.length; i++) if (ZONES.indexOf(p[i][3]) === -1) ZONES.push(p[i][3]);
+  });
+
+  function countryRow(country) {
+    for (var i = 0; i < PLACES.length; i++) if (PLACES[i][0] === country) return PLACES[i];
+    return null;
+  }
+
+  // { country, city, lat, lon, tz } for the saved place, falling back to the country's first city.
+  function place(s) {
+    var row = countryRow(s.country) || PLACES[0], c = row[1];
+    for (var i = 1; i < row.length; i++) if (row[i][0] === s.city) c = row[i];
+    return { country: row[0], city: c[0], lat: c[1], lon: c[2], tz: c[3] };
+  }
+
+  function timeZone(s) { return s.timezone === 'auto' ? place(s).tz : s.timezone; }
+
+  function zoneLabel(tz) { return tz.replace(/_/g, ' '); }
+
+  // Country, city and time zone lists depend on the saved settings s; the rest are fixed.
+  function choices(key, s) {
+    if (key === 'country') return PLACES.map(function (p) { return { value: p[0], label: p[0] }; });
+    if (key === 'city') {
+      return (countryRow(s.country) || PLACES[0]).slice(1).map(function (c) { return { value: c[0], label: c[0] }; });
+    }
+    if (key === 'timezone') {
+      return [{ value: 'auto', label: 'City (' + zoneLabel(place(s).tz) + ')' }].concat(ZONES.map(function (z) {
+        return { value: z, label: zoneLabel(z) };
+      }));
+    }
+    return CHOICES[key];
+  }
+
+  function choiceIndex(key, value, s) {
+    var list = choices(key, s);
+    for (var i = 0; i < list.length; i++) if (list[i].value === value) return i;
     return -1;
+  }
+
+  // The choice dir (+1/-1) steps away from value, wrapping around the list.
+  function stepChoice(key, value, dir, s) {
+    var list = choices(key, s), n = list.length;
+    return list[((choiceIndex(key, value, s) + dir) % n + n) % n].value;
+  }
+
+  // Sets a dropdown setting; a new country starts at its first city.
+  function chooseOption(s, key, value) {
+    var r = setOption(s, key, value);
+    if (key === 'country' && value !== s.country) r.city = countryRow(value)[1][0];
+    return r;
+  }
+
+  function stepOption(s, key, dir) { return chooseOption(s, key, stepChoice(key, s[key], dir, s)); }
+
+  var zoneFormats = {};
+
+  // date's wall-clock time in tz, as a local Date, so getHours() and friends read that zone's time.
+  // Unknown zones (or no Intl time zone support) leave date unchanged.
+  function zonedDate(date, tz) {
+    try {
+      var f = zoneFormats[tz] || (zoneFormats[tz] = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric',
+        hour: 'numeric', minute: 'numeric', second: 'numeric'
+      }));
+      var p = {};
+      f.formatToParts(date).forEach(function (x) { p[x.type] = +x.value; });
+      return new Date(p.year, p.month - 1, p.day, p.hour % 24, p.minute, p.second);
+    } catch (e) {
+      return date;
+    }
+  }
+
+  // Open-Meteo forecast for the saved place, with times in the chosen zone.
+  function weatherUrl(s) {
+    var p = place(s);
+    return 'https://api.open-meteo.com/v1/forecast?latitude=' + p.lat + '&longitude=' + p.lon +
+      '&timezone=' + encodeURIComponent(timeZone(s)) + '&forecast_days=7&wind_speed_unit=kmh' +
+      '&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day' +
+      '&hourly=temperature_2m,weather_code,is_day' +
+      '&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,weather_code,precipitation_probability_max';
   }
 
   function copyOf(o) {
@@ -214,7 +320,10 @@
       added: added,
       ambientMin: choiceIndex('ambientMin', s.ambientMin) !== -1 ? s.ambientMin : 3,
       weather: typeof s.weather === 'boolean' ? s.weather : true,
-      background: choiceIndex('background', s.background) !== -1 ? s.background : 'alone'
+      background: choiceIndex('background', s.background) !== -1 ? s.background : 'alone',
+      country: countryRow(s.country) ? s.country : PLACES[0][0],
+      city: countryRow(s.country) ? place(s).city : PLACES[0][1][0],
+      timezone: s.timezone === 'auto' || ZONES.indexOf(s.timezone) !== -1 ? s.timezone : 'auto'
     };
   }
 
@@ -223,11 +332,11 @@
     return null;
   }
 
-  // Every tile in launch order: built-ins copied, added apps made into glass tiles, each with a hidden flag.
+  // Every tile in launch order: built-ins copied, added apps built from what was saved, each with a hidden flag.
   function allTiles(s, builtins) {
     return s.order.map(function (id) {
       var b = builtinById(builtins, id), a = s.added[id];
-      var t = b ? copyOf(b) : { id: id, label: a.label, appId: a.appId, icon: a.icon, added: true, glass: true };
+      var t = b ? copyOf(b) : { id: id, label: a.label, appId: a.appId, icon: a.icon, added: true };
       t.hidden = s.hidden.indexOf(id) !== -1;
       return t;
     });
@@ -305,7 +414,8 @@
     weekView: weekView,
     normalizeSettings: normalizeSettings, allTiles: allTiles, visibleTiles: visibleTiles, moveTile: moveTile,
     toggleHidden: toggleHidden, addApp: addApp, removeApp: removeApp, availableApps: availableApps, isUserApp: isUserApp,
-    choices: choices, choiceIndex: choiceIndex, setOption: setOption, escapeHtml: escapeHtml
+    choices: choices, choiceIndex: choiceIndex, stepChoice: stepChoice, stepOption: stepOption, chooseOption: chooseOption, setOption: setOption, escapeHtml: escapeHtml,
+    place: place, timeZone: timeZone, zonedDate: zonedDate, weatherUrl: weatherUrl
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = Logic;

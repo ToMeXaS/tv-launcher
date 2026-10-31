@@ -1,7 +1,7 @@
 # TV Launcher
 
 A custom home screen (Tizen web app) for a Samsung TV (UE55CU8072UXXH): a day/night photo background (or a moving
-wallpaper that follows the time of day), clock, weather for Šiauliai and tiles for the Steam Deck (HDMI 1), Moonlight,
+wallpaper that follows the time of day), clock, weather (Šiauliai by default; country, city and time zone are set in Settings → Location) and tiles for the Steam Deck (HDMI 1), Moonlight,
 Stremio, YouTube and Netflix (PC on HDMI 2 and Twitch are there too, hidden until shown in Settings). A PC-side watcher relaunches it whenever the TV powers on.
 Design: `docs/superpowers/specs/2026-10-29-tv-launcher-design.md`.
 
@@ -11,9 +11,9 @@ Ambient screen, shown after a few idle minutes (Settings → Display → Ambient
 
 ![Ambient screen](docs/screenshots/standby.jpg)
 
-| 7-day forecast (Up, then OK on the weather card) | Settings (gear by the clock) |
+| 7-day forecast (Up, then OK on the weather card) | Settings → Location (gear by the clock) |
 |---|---|
-| ![7-day forecast](docs/screenshots/forecast.jpg) | ![Settings with a dropdown open](docs/screenshots/settings.jpg) |
+| ![7-day forecast](docs/screenshots/forecast.jpg) | ![Settings, Location with the city list open](docs/screenshots/settings.jpg) |
 
 ## Deploy / redeploy
 

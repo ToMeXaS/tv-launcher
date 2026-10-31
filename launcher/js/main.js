@@ -14,6 +14,7 @@
   var bgPeriod = ''; // Alone look currently playing, '' when the videos are off
   var aloneMissing = false; // the Alone files aren't in the repo (recorded locally), so a fresh copy uses the photos
   var weatherAt = 0;
+  var weatherUrl = ''; // forecast URL for the saved place and time zone
   var WEATHER_MAX_AGE = 12 * 3600 * 1000;
   var WEATHER_REFRESH = 30 * 60 * 1000;
   var inputRequest = 0;
@@ -38,6 +39,9 @@
 
   function weatherShown() { return !!weatherData && settings.weather; }
 
+  // The time now in the chosen time zone, as a local Date.
+  function now() { return Logic.zonedDate(new Date(), Logic.timeZone(settings)); }
+
   // Rebuilds the tile row from the settings, keeping focus on the same app when it is still shown.
   function applySettings() {
     var id = tiles.length ? tiles[focus].id : savedFocusId();
@@ -47,8 +51,22 @@
     for (var i = 0; i < tiles.length; i++) if (tiles[i].id === id) focus = i;
     document.body.classList.toggle('weather-off', !settings.weather);
     if (zone === 'weather' && !weatherShown()) zone = 'tiles';
+    $('week-place').textContent = Logic.place(settings).city;
     renderTiles();
-    setBackground();
+    setPlace();
+    refreshScreen();
+  }
+
+  // On a new place or time zone, shows its cached forecast (or none) and fetches a fresh one.
+  function setPlace() {
+    var url = Logic.weatherUrl(settings);
+    if (url === weatherUrl) return;
+    weatherUrl = url;
+    weatherData = null;
+    weatherAt = 0;
+    var c = Weather.cached(url);
+    if (c) renderWeather(c.data, c.at); else renderWeather();
+    Weather.refresh(url, renderWeather);
   }
 
   function renderTiles() {
@@ -73,10 +91,10 @@
   }
 
   function tick() {
-    var now = new Date();
-    $('clock').textContent = $('a-clock').textContent = Logic.formatTime(now);
-    $('date').textContent = $('a-date').textContent = Logic.formatDate(now);
-    $('greeting').textContent = Logic.greeting(now.getHours());
+    var t = now();
+    $('clock').textContent = $('a-clock').textContent = Logic.formatTime(t);
+    $('date').textContent = $('a-date').textContent = Logic.formatDate(t);
+    $('greeting').textContent = Logic.greeting(t.getHours());
     setBackground();
     if (!ambient && settings.ambientMin && !inputMode && !pendingInput && !Settings.isOpen() && !document.hidden &&
       Date.now() - lastKey > settings.ambientMin * 60 * 1000) enterAmbient();
@@ -104,14 +122,16 @@
     if (zone === 'weather') { zone = 'tiles'; updateFocus(); }
   }
 
-  function renderWeather(data, at) {
+  // url, when given, is the place the data is for; a forecast for a place since changed is dropped.
+  function renderWeather(data, at, url) {
+    if (url && url !== weatherUrl) return;
     if (data) { weatherData = data; weatherAt = at || Date.now(); }
     if (weatherData && Date.now() - weatherAt > WEATHER_MAX_AGE) weatherData = null;
     document.body.classList.toggle('no-weather', !weatherData);
     setBackground();
     if (!weatherData) { dropWeatherFocus(); return; }
     try {
-      var v = Logic.weatherView(weatherData, new Date());
+      var v = Logic.weatherView(weatherData, now());
       if (v) drawWeather(v); else hideWeather();
       if (weekOpen) drawWeek();
     } catch (e) {
@@ -120,7 +140,7 @@
   }
 
   function refreshWeatherIfStale() {
-    if (Date.now() - weatherAt > WEATHER_REFRESH) Weather.refresh(renderWeather);
+    if (Date.now() - weatherAt > WEATHER_REFRESH) Weather.refresh(weatherUrl, renderWeather);
   }
 
   function drawWeather(v) {
@@ -137,7 +157,7 @@
   }
 
   function drawWeek() {
-    var days = Logic.weekView(weatherData, new Date());
+    var days = Logic.weekView(weatherData, now());
     if (!days) return false;
     $('week-days').innerHTML = days.map(function (d) {
       return '<div class="day"><div class="name">' + d.day + '</div><div class="date">' + d.date + '</div>' +
@@ -161,13 +181,13 @@
 
   // Called every tick so the night photo comes in at sunset; only touches the DOM when the photo changes.
   function setBackground() {
-    var now = new Date();
-    var n = Logic.photoIndex(now, BG_COUNT) + 1;
+    var t = now();
+    var n = Logic.photoIndex(t, BG_COUNT) + 1;
     var alone = settings.background === 'alone' && !aloneMissing;
     var url = alone ? 'url(bg/alone.jpg)' :
-      'url(bg/' + (Logic.isNight(now, weatherData) ? 'night/' : '') + (n < 10 ? '0' : '') + n + '.jpg)';
+      'url(bg/' + (Logic.isNight(t, weatherData) ? 'night/' : '') + (n < 10 ? '0' : '') + n + '.jpg)';
     if (url !== bgUrl) document.body.style.backgroundImage = bgUrl = url;
-    setVideo(alone ? Logic.alonePeriod(now) : '');
+    setVideo(alone ? Logic.alonePeriod(t) : '');
   }
 
   // Loads the period's loop into the idle video and crossfades to it once it plays; the still stays behind as a fallback.
@@ -284,11 +304,7 @@
   aloneProbe.onerror = function () { aloneMissing = true; setBackground(); };
   aloneProbe.src = 'bg/alone.jpg';
   applySettings();
-  refreshScreen();
-  var cachedWeather = Weather.cached();
-  if (cachedWeather) renderWeather(cachedWeather.data, cachedWeather.at);
-  Weather.refresh(renderWeather);
   setInterval(tick, 10000);
   setInterval(function () { renderWeather(); }, 10 * 60 * 1000);
-  setInterval(function () { Weather.refresh(renderWeather); }, WEATHER_REFRESH);
+  setInterval(function () { Weather.refresh(weatherUrl, renderWeather); }, WEATHER_REFRESH);
 })();

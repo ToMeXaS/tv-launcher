@@ -177,7 +177,8 @@ const B = [
 test('normalizeSettings gives defaults for missing or corrupt input', () => {
   for (const raw of [null, 'x', 42, [], {}]) {
     assert.deepStrictEqual(Logic.normalizeSettings(raw, B),
-      { order: ['hdmi1', 'netflix', 'youtube'], hidden: [], added: {}, ambientMin: 3, weather: true, background: 'alone' });
+      { order: ['hdmi1', 'netflix', 'youtube'], hidden: [], added: {}, ambientMin: 3, weather: true, background: 'alone',
+        country: 'Lithuania', city: 'Šiauliai', timezone: 'auto' });
   }
 });
 
@@ -224,7 +225,7 @@ test('allTiles and visibleTiles build tiles in order with hidden flags', () => {
   const all = Logic.allTiles(s, B);
   assert.deepStrictEqual(all.map(t => [t.id, t.hidden]),
     [['youtube', false], ['hdmi1', true], ['netflix', false], ['app:foo', false]]);
-  assert.deepStrictEqual(all[3], { id: 'app:foo', label: 'Foo', appId: 'foo', icon: '', added: true, glass: true, hidden: false });
+  assert.deepStrictEqual(all[3], { id: 'app:foo', label: 'Foo', appId: 'foo', icon: '', added: true, hidden: false });
   assert.deepStrictEqual(Logic.visibleTiles(s, B).map(t => t.id), ['youtube', 'netflix', 'app:foo']);
   assert.strictEqual(B[1].hidden, undefined); // built-ins are copied, not changed
 });
@@ -281,10 +282,75 @@ test('choices lists each dropdown setting in order with labels', () => {
   assert.deepStrictEqual(Logic.choices('background').map(c => c.value), ['alone', 'photos']);
 });
 
+test('stepChoice moves to the next or previous choice and wraps around', () => {
+  assert.strictEqual(Logic.stepChoice('ambientMin', 3, 1), 5);
+  assert.strictEqual(Logic.stepChoice('ambientMin', 3, -1), 1);
+  assert.strictEqual(Logic.stepChoice('ambientMin', 10, 1), 0);
+  assert.strictEqual(Logic.stepChoice('background', 'alone', -1), 'photos');
+});
+
 test('choiceIndex finds the saved value, -1 when it is not a choice', () => {
   assert.strictEqual(Logic.choiceIndex('ambientMin', 5), 3);
   assert.strictEqual(Logic.choiceIndex('background', 'photos'), 1);
   assert.strictEqual(Logic.choiceIndex('ambientMin', 7), -1);
+});
+
+test('normalizeSettings keeps a valid place and zone, else falls back', () => {
+  const ok = Logic.normalizeSettings({ country: 'Japan', city: 'Osaka', timezone: 'UTC' }, B);
+  assert.deepStrictEqual([ok.country, ok.city, ok.timezone], ['Japan', 'Osaka', 'UTC']);
+  const wrongCity = Logic.normalizeSettings({ country: 'Japan', city: 'Vilnius' }, B);
+  assert.deepStrictEqual([wrongCity.country, wrongCity.city], ['Japan', 'Tokyo']);
+  const bad = Logic.normalizeSettings({ country: 'Atlantis', city: 'Osaka', timezone: 'Mars/Base' }, B);
+  assert.deepStrictEqual([bad.country, bad.city, bad.timezone], ['Lithuania', 'Šiauliai', 'auto']);
+});
+
+test('city and time zone choices follow the saved country', () => {
+  const s = Logic.normalizeSettings({ country: 'United States' }, B);
+  assert.deepStrictEqual(Logic.choices('city', s).map(c => c.value), ['New York', 'Chicago', 'Denver', 'Los Angeles']);
+  const zones = Logic.choices('timezone', s);
+  assert.deepStrictEqual(zones[0], { value: 'auto', label: 'City (America/New York)' });
+  assert.strictEqual(zones[1].value, 'UTC');
+  assert.strictEqual(Logic.choiceIndex('timezone', 'Asia/Tokyo', s) > 0, true);
+});
+
+test('stepOption moves a new country to its first city', () => {
+  const s = Logic.normalizeSettings({ country: 'Lithuania', city: 'Kaunas' }, B);
+  const next = Logic.stepOption(s, 'country', 1);
+  assert.deepStrictEqual([next.country, next.city], ['Latvia', 'Riga']);
+  assert.strictEqual(Logic.stepOption(s, 'country', -1).country, 'Australia'); // wraps
+  assert.strictEqual(Logic.stepOption(s, 'city', 1).city, 'Klaipėda');
+  assert.strictEqual(s.city, 'Kaunas');
+});
+
+test('chooseOption keeps the city when the same country is picked again', () => {
+  const s = Logic.normalizeSettings({ country: 'Lithuania', city: 'Kaunas' }, B);
+  assert.strictEqual(Logic.chooseOption(s, 'country', 'Lithuania').city, 'Kaunas');
+  assert.deepStrictEqual(['country', 'city'].map(k => Logic.chooseOption(s, 'country', 'Japan')[k]), ['Japan', 'Tokyo']);
+  assert.strictEqual(Logic.chooseOption(s, 'ambientMin', 10).ambientMin, 10);
+});
+
+test("timeZone is the city's zone on auto, else the chosen one", () => {
+  const s = Logic.normalizeSettings({ country: 'Japan' }, B);
+  assert.strictEqual(Logic.timeZone(s), 'Asia/Tokyo');
+  assert.strictEqual(Logic.timeZone(Logic.setOption(s, 'timezone', 'UTC')), 'UTC');
+});
+
+test('zonedDate gives the wall-clock time in a zone, unchanged for an unknown one', () => {
+  const at = new Date(Date.UTC(2026, 9, 31, 23, 30, 15));
+  const f = d => [d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds()];
+  assert.deepStrictEqual(f(Logic.zonedDate(at, 'UTC')), [2026, 9, 31, 23, 30, 15]);
+  assert.deepStrictEqual(f(Logic.zonedDate(at, 'Asia/Tokyo')), [2026, 10, 1, 8, 30, 15]);
+  assert.deepStrictEqual(f(Logic.zonedDate(at, 'America/New_York')), [2026, 9, 31, 19, 30, 15]);
+  assert.deepStrictEqual(f(Logic.zonedDate(new Date(Date.UTC(2026, 0, 1, 0, 0)), 'UTC')), [2026, 0, 1, 0, 0, 0]); // midnight is 0, not 24
+  assert.strictEqual(Logic.zonedDate(at, 'Mars/Base'), at);
+});
+
+test("weatherUrl asks for the place's coordinates in the chosen zone", () => {
+  const s = Logic.normalizeSettings({ country: 'United Kingdom', city: 'Edinburgh', timezone: 'Europe/Vilnius' }, B);
+  const url = Logic.weatherUrl(s);
+  assert.match(url, /latitude=55\.95&longitude=-3\.19&/);
+  assert.match(url, /&timezone=Europe%2FVilnius&/);
+  assert.match(Logic.weatherUrl(Logic.normalizeSettings(null, B)), /latitude=55\.93&longitude=23\.31&timezone=Europe%2FVilnius&/);
 });
 
 test('setOption returns a changed copy', () => {

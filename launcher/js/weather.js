@@ -1,29 +1,25 @@
 var Weather = (function () {
   'use strict';
-  var URL = 'https://api.open-meteo.com/v1/forecast?latitude=55.93&longitude=23.31' +
-    '&timezone=Europe%2FVilnius&forecast_days=7&wind_speed_unit=kmh' +
-    '&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day' +
-    '&hourly=temperature_2m,weather_code,is_day' +
-    '&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,weather_code,precipitation_probability_max';
-  var KEY = 'weather-v2'; // v2: 7 days + daily codes
+  var KEY = 'weather-v3'; // v3: cache remembers which place/time zone (URL) it is for
   var MAX_AGE = 12 * 3600 * 1000;
 
-  function cached() {
+  // The cached forecast for url, or null when it is for another place or too old.
+  function cached(url) {
     try {
       var c = JSON.parse(localStorage.getItem(KEY));
-      if (c && Date.now() - c.at < MAX_AGE) return { at: c.at, data: c.data };
+      if (c && c.url === url && Date.now() - c.at < MAX_AGE) return { at: c.at, data: c.data };
     } catch (e) { /* no or bad cache */ }
     return null;
   }
 
-  function refresh(onData) {
-    fetch(URL).then(function (r) {
+  function refresh(url, onData) {
+    fetch(url).then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
     }).then(function (data) {
       var at = Date.now();
-      try { localStorage.setItem(KEY, JSON.stringify({ at: at, data: data })); } catch (e) { /* full */ }
-      onData(data, at);
+      try { localStorage.setItem(KEY, JSON.stringify({ url: url, at: at, data: data })); } catch (e) { /* full */ }
+      onData(data, at, url);
     }).catch(function () { /* keep showing cache, or nothing */ });
   }
 
