@@ -44,7 +44,8 @@ Back themselves). Workaround: pin "Home" as the first app in Smart Hub's app row
 ## Using it
 
 Left/Right pick a tile, OK opens it, or press 1-9 to open a visible tile directly. Focus starts on the last tile opened.
-Up focuses the weather card; OK there shows the 7-day forecast, Back closes it. Up again focuses the gear next to
+Up focuses the weather card; OK there shows the 7-day forecast (a chart of each day's high and low, with the
+chance and amount of rain and the top wind speed below), Back closes it. Up again focuses the gear next to
 the clock; OK opens Settings. After the ambient delay (3 idle minutes by default) only the photo, a big clock and the
 temperature stay up; any key brings the rest back.
 
