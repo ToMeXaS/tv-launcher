@@ -60,7 +60,7 @@ Up/Down pick a section, Right or OK enters it, Left or Back goes back.
   photos. If you own the [Alone wallpaper](https://steamcommunity.com/sharedfiles/filedetails/?id=3448877775) in
   Wallpaper Engine, record it into `launcher/bg/alone/` with `powershell -ExecutionPolicy Bypass -File scripts/record-wallpaper.ps1`
   (needs ffmpeg; keep the mouse still for ~5 min; it raises Wallpaper Engine's FPS limit while recording and restores it after).
-- **Location**: country and city for the weather (22 countries across Europe, plus the US, Canada, Japan and Australia; Šiauliai by default), and the
+- **Location**: country and city for the weather (22 countries: most of Europe plus the US, Canada, Japan and Australia; Šiauliai by default), and the
   time zone the clock and forecast use: the city's own zone (the default), UTC or any other listed zone. A new country
   starts at its first city.
 
