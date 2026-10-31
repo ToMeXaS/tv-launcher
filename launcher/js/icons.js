@@ -49,10 +49,12 @@ var Icons = (function () {
     tiles: line('<rect x="8" y="14" width="20" height="16" rx="3"/><rect x="36" y="14" width="20" height="16" rx="3"/><rect x="8" y="38" width="20" height="16" rx="3"/><rect x="36" y="38" width="20" height="16" rx="3"/>'),
     add: line('<rect x="8" y="8" width="48" height="48" rx="12"/><path d="M32 20v24M20 32h24"/>'),
     display: line('<rect x="6" y="10" width="52" height="34" rx="4"/><path d="M24 54h16M32 44v10"/>'),
+    pictures: line('<rect x="6" y="10" width="52" height="44" rx="5"/><circle cx="22" cy="25" r="5"/><path d="M8 48l16-14 10 9 8-6 14 11"/>'),
     location: line('<path d="M32 58S14 40 14 26a18 18 0 0 1 36 0c0 14-18 32-18 32z"/><circle cx="32" cy="26" r="6"/>'),
     reset: line('<path d="M14 32a18 18 0 1 0 6-13.4"/><path d="M14 8v12h12"/>')
   };
   var chevron = line('<path d="M18 26l14 14 14-14"/>'); // on settings rows that open a dropdown
+  var usb = line('<rect x="20" y="24" width="24" height="34" rx="4"/><path d="M24 24V8h16v16M28 14v4M36 14v4"/>'); // the import row in My pictures
   var check = line('<path d="M16 33l11 11 21-22"/>'); // the current choice in a dropdown
 
   // Built-in tiles use their drawn logo; added apps use the TV's icon, or their first letter when it won't load.
@@ -64,5 +66,5 @@ var Icons = (function () {
     return '<img src="' + Logic.escapeHtml(t.icon) + '" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'\'">' + letter;
   }
 
-  return { weather: weather, sun: sunsetIcon, app: app, gear: gear, move: move, sections: sections, chevron: chevron, check: check, tileLogo: tileLogo };
+  return { weather: weather, sun: sunsetIcon, app: app, gear: gear, move: move, sections: sections, chevron: chevron, check: check, usb: usb, tileLogo: tileLogo };
 })();

@@ -1,7 +1,7 @@
 # TV Launcher
 
-A custom home screen (Tizen web app) for a Samsung TV (UE55CU8072UXXH): a day/night photo background (or a moving
-wallpaper that follows the time of day), clock, weather (Šiauliai by default; country, city and time zone are set in Settings → Location) and tiles for the Steam Deck (HDMI 1), Moonlight,
+A custom home screen (Tizen web app) for a Samsung TV (UE55CU8072UXXH): a photo background that follows the time of day (or your own
+pictures, imported from a USB stick), clock, weather (Šiauliai by default; country, city and time zone are set in Settings → Location) and tiles for the Steam Deck (HDMI 1), Moonlight,
 Stremio, YouTube and Netflix (PC on HDMI 2 and Twitch are there too, hidden until shown in Settings). A PC-side watcher relaunches it whenever the TV powers on.
 Design: `docs/superpowers/specs/2026-10-29-tv-launcher-design.md`.
 
@@ -46,7 +46,8 @@ Back themselves). Workaround: pin "Home" as the first app in Smart Hub's app row
 Left/Right pick a tile, OK opens it, or press 1-9 to open a visible tile directly. Focus starts on the last tile opened.
 Up focuses the weather card; OK there shows the 7-day forecast (a chart of each day's high and low, with the
 chance and amount of rain and the top wind speed below), Back closes it. Up again focuses the gear next to
-the clock; OK opens Settings. After the ambient delay (3 idle minutes by default) only the photo, a big clock and the
+the clock; OK opens Settings. The clock and gear sit on a soft dark band at the top of the screen, with a shadow, so they
+stay readable on bright pictures. After the ambient delay (3 idle minutes by default) only the photo, a big clock and the
 temperature stay up; any key brings the rest back.
 
 ## Settings
@@ -56,11 +57,13 @@ Up/Down pick a section, Right or OK enters it, Left or Back goes back.
 - **Home tiles**: OK on a tile opens its menu: Show/Hide on the home screen, Move (Up/Down carry it, OK drops it) and,
   for apps you added, Remove tile. At least one tile always stays visible.
 - **Add apps**: lists apps installed on the TV that don't have a tile yet; OK adds one at the end. Only regular installed apps are listed (system apps, and a few Samsung apps like SmartThings, are left out).
-- **Display**: ambient delay (Off, 1, 3, 5, 10 min), the weather card on/off, and the background (Alone, the PC's Wallpaper Engine scene as moving 30 s loops that follow the time of day: morning 04-09, day 09-17, dusk 17-20, night 20-04; or the rotating day/night photos).
-  The Alone wallpaper isn't included in this repo (it's someone else's artwork). Without it the launcher uses the
-  photos. If you own the [Alone wallpaper](https://steamcommunity.com/sharedfiles/filedetails/?id=3448877775) in
-  Wallpaper Engine, record it into `launcher/bg/alone/` with `powershell -ExecutionPolicy Bypass -File scripts/record-wallpaper.ps1`
-  (needs ffmpeg; keep the mouse still for ~5 min; it raises Wallpaper Engine's FPS limit while recording and restores it after).
+- **Display**: ambient delay (Off, 1, 3, 5, 10 min), the weather card on/off, and the background (Photos, the
+  rotating morning, day, evening and night photos; or My pictures, one of your imported pictures a day, falling back to the
+  photos at any time of day none of your pictures is set for). Morning is the two hours after sunrise, evening the two
+  hours before sunset and night from sunset to sunrise, using the weather's sun times (06:00 and 18:00 without weather).
+- **My pictures**: plug a USB stick into the TV and press OK on Import from USB stick. It lists the pictures (jpg, png,
+  webp, bmp, gif) on the stick, up to three folders deep; OK on one copies it to the TV, so the stick can be unplugged
+  afterwards, and switches the background to My pictures. Back returns to your imported pictures. OK on one opens its menu: switch Morning, Day, Evening and Night on or off to pick when it shows (new pictures show at any time), or Remove picture, which needs OK twice.
 - **Location**: country and city for the weather (22 countries: most of Europe plus the US, Canada, Japan and Australia; Šiauliai by default), and the
   time zone the clock and forecast use: the city's own zone (the default), UTC or any other listed zone. A new country
   starts at its first city.
@@ -68,14 +71,14 @@ Up/Down pick a section, Right or OK enters it, Left or Back goes back.
 On Display and Location rows, Left/Right step through the choices; OK opens the full list (Up/Down chooses, OK
 selects, Back or Left cancels) and flips the weather card on/off.
 
-- **Reset**: OK twice restores the default tiles, display options and location.
+- **Reset**: Home tiles, Display and Location can each go back to their defaults on their own, or all three together with **All settings** (imported pictures are kept). **My pictures** deletes every imported picture. Each row says what it will change, or that it's already at defaults, and needs OK twice.
 
-Settings are stored on the TV (`localStorage`, key `settings-v1`).
+Settings are stored on the TV (`localStorage`, key `settings-v1`); imported pictures in the app's private storage (`wgt-private/backgrounds`).
 
 ## Customising
 
 - Built-in tiles and app ids: `launcher/js/tiles.js` (tile `id`s are stored in settings; don't rename them)
-- Background photos: `launcher/bg/` by day, `launcher/bg/night/` between sunset and sunrise (fetched by `scripts/fetch-backgrounds.py`)
+- Background photos: `launcher/bg/` by day, `launcher/bg/morning/`, `launcher/bg/evening/` and `launcher/bg/night/` for the other times of day (fetched by `scripts/fetch-backgrounds.py`)
 
 ## Tests
 
@@ -89,5 +92,5 @@ token: keep it private, never commit it.
 
 ## License
 
-MIT, see `LICENSE`. Background photos: see `launcher/bg/CREDITS.txt`. Not affiliated with Samsung, Valve (Steam Deck),
-Netflix, YouTube, Twitch, Stremio, Moonlight or Wallpaper Engine; their names and logos belong to their owners.
+MIT, see `LICENSE`. Background photos: see the `CREDITS.txt` in `launcher/bg/` and its folders. Not affiliated with Samsung, Valve (Steam Deck),
+Netflix, YouTube, Twitch, Stremio or Moonlight; their names and logos belong to their owners.

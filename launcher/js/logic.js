@@ -34,12 +34,6 @@
     return day % count;
   }
 
-  // Which look of the Alone scene to show; same hours as the wallpaper's own settings.
-  function alonePeriod(d) {
-    var h = d.getHours();
-    return h < 4 ? 'night' : h < 9 ? 'morning' : h < 17 ? 'day' : h < 20 ? 'dusk' : 'night';
-  }
-
   function parseLocal(s) {
     var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(s);
     return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]);
@@ -89,11 +83,48 @@
     return { kind: 'sunrise', text: 'Sunrise at ' + formatTime(parseLocal(next)) };
   }
 
-  // Between sunset and sunrise when the weather data has today's row; otherwise 18:00-06:00.
-  function isNight(now, data) {
+  var TIMES = ['morning', 'day', 'evening', 'night'];
+  var GOLDEN_HOURS = 2;
+
+  // Night between sunset and sunrise, morning the first two hours after sunrise, evening the last two before sunset.
+  // Uses today's sun times from the weather data when it has them; otherwise sunrise 06:00 and sunset 18:00.
+  function timeOfDay(now, data) {
     var idx = data ? todayIndex(data, now) : -1;
-    if (idx === -1) return now.getHours() >= 18 || now.getHours() < 6;
-    return now < parseLocal(data.daily.sunrise[idx]) || now >= parseLocal(data.daily.sunset[idx]);
+    var rise = idx === -1 ? new Date(now.getFullYear(), now.getMonth(), now.getDate(), 6) : parseLocal(data.daily.sunrise[idx]);
+    var set = idx === -1 ? new Date(now.getFullYear(), now.getMonth(), now.getDate(), 18) : parseLocal(data.daily.sunset[idx]);
+    var hours = GOLDEN_HOURS * 3600000;
+    if (now < rise || now >= set) return 'night';
+    if (now - rise < hours) return 'morning';
+    if (set - now <= hours) return 'evening';
+    return 'day';
+  }
+
+  function timeLabel(time) { return time.charAt(0).toUpperCase() + time.slice(1); }
+
+  // The times of day an imported picture shows at; pictures never changed show at all of them.
+  function pictureTimes(s, name) { return s.pictureTimes[name] || TIMES; }
+
+  function timesLabel(times) {
+    if (times.length === TIMES.length) return 'Any time';
+    return times.length ? times.map(timeLabel).join(' · ') : 'Never shown';
+  }
+
+  function togglePictureTime(s, name, time) {
+    var cur = pictureTimes(s, name), on = cur.indexOf(time) === -1;
+    var next = TIMES.filter(function (t) { return t === time ? on : cur.indexOf(t) !== -1; });
+    var map = copyOf(s.pictureTimes);
+    if (next.length === TIMES.length) delete map[name]; else map[name] = next;
+    return setOption(s, 'pictureTimes', map);
+  }
+
+  function forgetPicture(s, name) {
+    var map = copyOf(s.pictureTimes);
+    delete map[name];
+    return setOption(s, 'pictureTimes', map);
+  }
+
+  function picturesFor(pics, s, time) {
+    return pics.filter(function (p) { return pictureTimes(s, p.name).indexOf(time) !== -1; });
   }
 
   function nextHours(data, now, count) {
@@ -176,8 +207,8 @@
       { value: 0, label: 'Off' }, { value: 1, label: '1 min' }, { value: 3, label: '3 min' },
       { value: 5, label: '5 min' }, { value: 10, label: '10 min' }
     ],
-    background: [ // 'alone' = the PC's Wallpaper Engine scene, 'photos' = rotating day/night photos
-      { value: 'alone', label: 'Alone' }, { value: 'photos', label: 'Photos' }
+    background: [ // 'photos' = rotating photos for the time of day, 'custom' = pictures imported in Settings → My pictures
+      { value: 'photos', label: 'Photos' }, { value: 'custom', label: 'My pictures' }
     ]
   };
 
@@ -335,11 +366,42 @@
       added: added,
       ambientMin: choiceIndex('ambientMin', s.ambientMin) !== -1 ? s.ambientMin : 3,
       weather: typeof s.weather === 'boolean' ? s.weather : true,
-      background: choiceIndex('background', s.background) !== -1 ? s.background : 'alone',
+      background: choiceIndex('background', s.background) !== -1 ? s.background : 'photos',
       country: countryRow(s.country) ? s.country : PLACES[0][0],
       city: countryRow(s.country) ? place(s).city : PLACES[0][1][0],
-      timezone: s.timezone === 'auto' || ZONES.indexOf(s.timezone) !== -1 ? s.timezone : 'auto'
+      timezone: s.timezone === 'auto' || ZONES.indexOf(s.timezone) !== -1 ? s.timezone : 'auto',
+      pictureTimes: normalizeTimes(s.pictureTimes)
     };
+  }
+
+  // { picture name: [times of day] }, keeping only known times in TIMES order.
+  function normalizeTimes(raw) {
+    var r = {};
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return r;
+    Object.keys(raw).forEach(function (name) {
+      if (Array.isArray(raw[name])) r[name] = TIMES.filter(function (t) { return raw[name].indexOf(t) !== -1; });
+    });
+    return r;
+  }
+
+  // Settings fields each Reset row puts back; 'all' is every field.
+  var PARTS = {
+    tiles: ['order', 'hidden', 'added'],
+    display: ['ambientMin', 'weather', 'background'],
+    location: ['country', 'city', 'timezone']
+  };
+
+  function partKeys(part, s) { return PARTS[part] || Object.keys(s); }
+
+  function resetPart(s, part, builtins) {
+    var d = normalizeSettings(null, builtins), r = copyOf(s);
+    partKeys(part, d).forEach(function (k) { r[k] = d[k]; });
+    return r;
+  }
+
+  function isDefault(s, part, builtins) {
+    var d = normalizeSettings(null, builtins);
+    return partKeys(part, d).every(function (k) { return JSON.stringify(s[k]) === JSON.stringify(d[k]); });
   }
 
   function builtinById(builtins, id) {
@@ -406,6 +468,22 @@
     });
   }
 
+  // Pictures the TV can show as a background; macOS '._' resource forks on USB sticks share the extension but aren't images.
+  function isPicture(name) {
+    return /\.(jpe?g|png|webp|bmp|gif)$/i.test(name) && name.slice(0, 2) !== '._';
+  }
+
+  // A picture's file name with the characters that would break a file URL or a CSS url("...") replaced.
+  function safeName(name) {
+    return String(name).replace(/["'\\/#%?()<>&\u0000-\u001f]/g, '_');
+  }
+
+  // Sorted by name, case-insensitively, so the rotation order matches what the list in Settings shows.
+  function byName(a, b) {
+    var x = a.name.toLowerCase(), y = b.name.toLowerCase();
+    return x < y ? -1 : x > y ? 1 : 0;
+  }
+
   var HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
   function escapeHtml(str) {
@@ -424,13 +502,15 @@
 
   var Logic = {
     formatTime: formatTime, formatDate: formatDate, greeting: greeting,
-    moveFocus: moveFocus, numberTile: numberTile, photoIndex: photoIndex, alonePeriod: alonePeriod, parseLocal: parseLocal,
-    weatherInfo: weatherInfo, todayIndex: todayIndex, sunLine: sunLine, isNight: isNight, nextHours: nextHours, weatherView: weatherView,
+    moveFocus: moveFocus, numberTile: numberTile, photoIndex: photoIndex, parseLocal: parseLocal,
+    weatherInfo: weatherInfo, todayIndex: todayIndex, sunLine: sunLine, timeOfDay: timeOfDay, nextHours: nextHours, weatherView: weatherView,
     weekView: weekView, weekChart: weekChart,
-    normalizeSettings: normalizeSettings, allTiles: allTiles, visibleTiles: visibleTiles, moveTile: moveTile,
+    normalizeSettings: normalizeSettings, resetPart: resetPart, isDefault: isDefault, allTiles: allTiles, visibleTiles: visibleTiles, moveTile: moveTile,
     toggleHidden: toggleHidden, addApp: addApp, removeApp: removeApp, availableApps: availableApps, isUserApp: isUserApp,
     choices: choices, choiceIndex: choiceIndex, stepChoice: stepChoice, stepOption: stepOption, chooseOption: chooseOption, setOption: setOption, escapeHtml: escapeHtml,
-    place: place, timeZone: timeZone, zonedDate: zonedDate, weatherUrl: weatherUrl
+    place: place, timeZone: timeZone, zonedDate: zonedDate, weatherUrl: weatherUrl, isPicture: isPicture, safeName: safeName, byName: byName,
+    TIMES: TIMES, timeLabel: timeLabel, pictureTimes: pictureTimes, timesLabel: timesLabel, togglePictureTime: togglePictureTime,
+    forgetPicture: forgetPicture, picturesFor: picturesFor
   };
 
   if (typeof module !== 'undefined' && module.exports) module.exports = Logic;

@@ -53,17 +53,38 @@ test('weatherInfo maps codes and swaps night icons', () => {
   assert.strictEqual(Logic.weatherInfo(12345, true).label, 'Overcast'); // unknown code fallback
 });
 
-test('isNight uses today\'s sunrise/sunset, else 18:00-06:00', () => {
-  assert.strictEqual(Logic.isNight(new Date(2026, 9, 29, 8, 11), data), true);
-  assert.strictEqual(Logic.isNight(new Date(2026, 9, 29, 8, 12), data), false);
-  assert.strictEqual(Logic.isNight(new Date(2026, 9, 29, 17, 4), data), false);
-  assert.strictEqual(Logic.isNight(new Date(2026, 9, 29, 17, 5), data), true);
-  // no weather, or no row for today
-  assert.strictEqual(Logic.isNight(new Date(2026, 9, 29, 17, 30), null), false);
-  assert.strictEqual(Logic.isNight(new Date(2026, 9, 29, 18, 0), null), true);
-  assert.strictEqual(Logic.isNight(new Date(2026, 9, 29, 5, 59), null), true);
-  assert.strictEqual(Logic.isNight(new Date(2026, 9, 29, 6, 0), null), false);
-  assert.strictEqual(Logic.isNight(new Date(2027, 0, 5, 20, 0), data), true);
+test('timeOfDay: night outside sunrise-sunset, morning/evening the two hours after/before it', () => {
+  const at = (h, m) => Logic.timeOfDay(new Date(2026, 9, 29, h, m), data); // sunrise 08:12, sunset 17:05
+  assert.deepStrictEqual([at(8, 11), at(8, 12), at(10, 11), at(10, 12), at(15, 4), at(15, 5), at(17, 4), at(17, 5)],
+    ['night', 'morning', 'morning', 'day', 'day', 'evening', 'evening', 'night']);
+  // no weather, or no row for today: sunrise 06:00, sunset 18:00
+  const no = (h, m, d) => Logic.timeOfDay(new Date(2026, 9, 29, h, m), d);
+  assert.deepStrictEqual([no(5, 59, null), no(6, 0, null), no(8, 0, null), no(15, 59, null), no(16, 0, null), no(18, 0, null)],
+    ['night', 'morning', 'day', 'day', 'evening', 'night']);
+  assert.strictEqual(Logic.timeOfDay(new Date(2027, 0, 5, 7, 0), data), 'morning');
+});
+
+test('picture times: all by default, toggled per picture, forgotten on remove', () => {
+  const s = Logic.normalizeSettings(null, B);
+  const pics = [{ name: 'a.jpg' }, { name: 'b.jpg' }];
+  assert.strictEqual(Logic.timesLabel(Logic.pictureTimes(s, 'a.jpg')), 'Any time');
+  const s1 = Logic.togglePictureTime(Logic.togglePictureTime(s, 'a.jpg', 'night'), 'a.jpg', 'day');
+  assert.deepStrictEqual(Logic.pictureTimes(s1, 'a.jpg'), ['morning', 'evening']);
+  assert.strictEqual(Logic.timesLabel(Logic.pictureTimes(s1, 'a.jpg')), 'Morning · Evening');
+  assert.deepStrictEqual(Logic.picturesFor(pics, s1, 'night').map(p => p.name), ['b.jpg']);
+  assert.deepStrictEqual(Logic.picturesFor(pics, s1, 'evening').map(p => p.name), ['a.jpg', 'b.jpg']);
+  // switching every time back on drops the entry; switching all off is allowed
+  const back = Logic.togglePictureTime(Logic.togglePictureTime(s1, 'a.jpg', 'night'), 'a.jpg', 'day');
+  assert.deepStrictEqual(back.pictureTimes, {});
+  let none = s;
+  for (const t of Logic.TIMES) none = Logic.togglePictureTime(none, 'b.jpg', t);
+  assert.strictEqual(Logic.timesLabel(Logic.pictureTimes(none, 'b.jpg')), 'Never shown');
+  assert.deepStrictEqual(Logic.forgetPicture(none, 'b.jpg').pictureTimes, {});
+  assert.deepStrictEqual(s.pictureTimes, {}); // input untouched
+  // saved values are cleaned up
+  assert.deepStrictEqual(Logic.normalizeSettings({ pictureTimes: { 'a.jpg': ['night', 'x', 'morning'], 'b.jpg': 'day' } }, B).pictureTimes,
+    { 'a.jpg': ['morning', 'night'] });
+  assert.deepStrictEqual(Logic.normalizeSettings({ pictureTimes: [] }, B).pictureTimes, {});
 });
 
 test('sunLine: before sunrise, daytime, after sunset', () => {
@@ -186,9 +207,26 @@ const B = [
 test('normalizeSettings gives defaults for missing or corrupt input', () => {
   for (const raw of [null, 'x', 42, [], {}]) {
     assert.deepStrictEqual(Logic.normalizeSettings(raw, B),
-      { order: ['hdmi1', 'netflix', 'youtube'], hidden: [], added: {}, ambientMin: 3, weather: true, background: 'alone',
-        country: 'Lithuania', city: 'Šiauliai', timezone: 'auto' });
+      { order: ['hdmi1', 'netflix', 'youtube'], hidden: [], added: {}, ambientMin: 3, weather: true, background: 'photos',
+        country: 'Lithuania', city: 'Šiauliai', timezone: 'auto', pictureTimes: {} });
   }
+});
+
+test('resetPart puts back only that part and isDefault checks it', () => {
+  const d = Logic.normalizeSettings(null, B);
+  const s = Object.assign({}, d, { order: ['youtube', 'hdmi1', 'netflix'], hidden: ['netflix'], ambientMin: 10, weather: false, city: 'Kaunas', timezone: 'Europe/Riga' });
+  assert.strictEqual(Logic.isDefault(s, 'tiles', B), false);
+  const tiles = Logic.resetPart(s, 'tiles', B);
+  assert.deepStrictEqual([tiles.order, tiles.hidden, tiles.ambientMin, tiles.city], [d.order, [], 10, 'Kaunas']);
+  assert.strictEqual(Logic.isDefault(tiles, 'tiles', B), true);
+  assert.strictEqual(Logic.isDefault(tiles, 'display', B), false);
+  const display = Logic.resetPart(s, 'display', B);
+  assert.deepStrictEqual([display.ambientMin, display.weather, display.city], [3, true, 'Kaunas']);
+  const location = Logic.resetPart(s, 'location', B);
+  assert.deepStrictEqual([location.city, location.timezone, location.ambientMin], ['Šiauliai', 'auto', 10]);
+  assert.deepStrictEqual(Logic.resetPart(s, 'all', B), d);
+  assert.strictEqual(Logic.isDefault(d, 'all', B), true);
+  assert.strictEqual(s.ambientMin, 10); // input untouched
 });
 
 test('normalizeSettings hides off-by-default built-ins only when nothing is saved', () => {
@@ -217,14 +255,14 @@ test('normalizeSettings keeps valid added apps and rejects malformed ones', () =
   assert.deepStrictEqual(s.order, ['app:foo', 'hdmi1', 'netflix', 'youtube']);
   assert.strictEqual(s.ambientMin, 3);
   assert.strictEqual(s.weather, true);
-  assert.strictEqual(s.background, 'alone');
+  assert.strictEqual(s.background, 'photos');
 });
 
 test('normalizeSettings keeps valid display options and never hides every tile', () => {
-  const s = Logic.normalizeSettings({ ambientMin: 0, weather: false, background: 'photos', hidden: ['hdmi1', 'netflix', 'youtube'] }, B);
+  const s = Logic.normalizeSettings({ ambientMin: 0, weather: false, background: 'custom', hidden: ['hdmi1', 'netflix', 'youtube'] }, B);
   assert.strictEqual(s.ambientMin, 0);
   assert.strictEqual(s.weather, false);
-  assert.strictEqual(s.background, 'photos');
+  assert.strictEqual(s.background, 'custom');
   assert.deepStrictEqual(s.hidden, []);
 });
 
@@ -288,19 +326,19 @@ test('availableApps drops apps that already have a tile and sorts by name', () =
 test('choices lists each dropdown setting in order with labels', () => {
   assert.deepStrictEqual(Logic.choices('ambientMin').map(c => c.label), ['Off', '1 min', '3 min', '5 min', '10 min']);
   assert.deepStrictEqual(Logic.choices('ambientMin').map(c => c.value), [0, 1, 3, 5, 10]);
-  assert.deepStrictEqual(Logic.choices('background').map(c => c.value), ['alone', 'photos']);
+  assert.deepStrictEqual(Logic.choices('background').map(c => c.value), ['photos', 'custom']);
 });
 
 test('stepChoice moves to the next or previous choice and wraps around', () => {
   assert.strictEqual(Logic.stepChoice('ambientMin', 3, 1), 5);
   assert.strictEqual(Logic.stepChoice('ambientMin', 3, -1), 1);
   assert.strictEqual(Logic.stepChoice('ambientMin', 10, 1), 0);
-  assert.strictEqual(Logic.stepChoice('background', 'alone', -1), 'photos');
+  assert.strictEqual(Logic.stepChoice('background', 'photos', -1), 'custom');
 });
 
 test('choiceIndex finds the saved value, -1 when it is not a choice', () => {
   assert.strictEqual(Logic.choiceIndex('ambientMin', 5), 3);
-  assert.strictEqual(Logic.choiceIndex('background', 'photos'), 1);
+  assert.strictEqual(Logic.choiceIndex('background', 'custom'), 1);
   assert.strictEqual(Logic.choiceIndex('ambientMin', 7), -1);
 });
 
@@ -391,8 +429,20 @@ test('isUserApp rejects system packages and internal blocklisted apps', () => {
   assert.strictEqual(no('com.samsung.tv.quickpanel', '/opt/usr/apps/com.samsung.tv.quickpanel/shared/res/com.samsung.tv.quickpanel.png'), false);
 });
 
-test('alonePeriod follows the wallpaper schedule: morning 4, day 9, dusk 17, night 20', () => {
-  const at = h => Logic.alonePeriod(new Date(2026, 9, 29, h, 30));
-  assert.deepStrictEqual([0, 3, 4, 8, 9, 16, 17, 19, 20, 23].map(at),
-    ['night', 'night', 'morning', 'morning', 'day', 'day', 'dusk', 'dusk', 'night', 'night']);
+test('normalizeSettings turns the removed Alone background into photos', () => {
+  assert.strictEqual(Logic.normalizeSettings({ background: 'alone' }, B).background, 'photos');
+});
+
+test('isPicture accepts image files and skips macOS resource forks', () => {
+  assert.deepStrictEqual(['a.JPG', 'b.jpeg', 'c.png', 'd.webp', 'e.bmp', 'f.gif', '._a.jpg', 'g.mp4', 'jpg', 'h.jpg.txt'].map(Logic.isPicture),
+    [true, true, true, true, true, true, false, false, false, false]);
+});
+
+test('byName sorts pictures by name ignoring case', () => {
+  assert.deepStrictEqual([{ name: 'b.jpg' }, { name: 'A.jpg' }, { name: 'c.jpg' }].sort(Logic.byName).map(p => p.name), ['A.jpg', 'b.jpg', 'c.jpg']);
+});
+
+test('safeName replaces characters that break a URL and keeps the rest', () => {
+  assert.strictEqual(Logic.safeName('Šiauliai #1 (50%) "best".jpg'), 'Šiauliai _1 _50__ _best_.jpg');
+  assert.strictEqual(Logic.safeName('a/b\\c?.png'), 'a_b_c_.png');
 });

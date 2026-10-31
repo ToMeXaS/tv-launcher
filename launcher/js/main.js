@@ -11,8 +11,6 @@
   var root = document.documentElement;
   var weatherData = null;
   var bgUrl = '';
-  var bgPeriod = ''; // Alone look currently playing, '' when the videos are off
-  var aloneMissing = false; // the Alone files aren't in the repo (recorded locally), so a fresh copy uses the photos
   var weatherAt = 0;
   var weatherUrl = ''; // forecast URL for the saved place and time zone
   var WEATHER_MAX_AGE = 12 * 3600 * 1000;
@@ -218,43 +216,16 @@
     root.classList.remove('week-open');
   }
 
-  // Called every tick so the night photo comes in at sunset; only touches the DOM when the photo changes.
+  // Called every tick so the picture follows the time of day; only touches the DOM when the picture changes.
+  // My pictures set to show at this time of day rotate one a day like the photos; with none, the photos show instead.
   function setBackground() {
     var t = now();
+    var time = Logic.timeOfDay(t, weatherData);
+    var pics = settings.background === 'custom' ? Logic.picturesFor(Pictures.all(), settings, time) : [];
     var n = Logic.photoIndex(t, BG_COUNT) + 1;
-    var alone = settings.background === 'alone' && !aloneMissing;
-    var url = alone ? 'url(bg/alone.jpg)' :
-      'url(bg/' + (Logic.isNight(t, weatherData) ? 'night/' : '') + (n < 10 ? '0' : '') + n + '.jpg)';
+    var url = pics.length ? 'url("' + pics[Logic.photoIndex(t, pics.length)].url + '")' :
+      'url(bg/' + (time === 'day' ? '' : time + '/') + (n < 10 ? '0' : '') + n + '.jpg)';
     if (url !== bgUrl) document.body.style.backgroundImage = bgUrl = url;
-    setVideo(alone ? Logic.alonePeriod(t) : '');
-  }
-
-  // Loads the period's loop into the idle video and crossfades to it once it plays; the still stays behind as a fallback.
-  function setVideo(period) {
-    if (period === bgPeriod) return;
-    bgPeriod = period;
-    var vids = document.querySelectorAll('#bgv video');
-    var cur = vids[0].classList.contains('on') ? vids[0] : vids[1];
-    var next = cur === vids[0] ? vids[1] : vids[0];
-    if (!period) {
-      for (var i = 0; i < vids.length; i++) { vids[i].classList.remove('on'); vids[i].pause(); vids[i].removeAttribute('src'); vids[i].load(); }
-      return;
-    }
-    next.onplaying = function () {
-      next.onplaying = null;
-      next.classList.add('on');
-      cur.classList.remove('on');
-      setTimeout(function () { if (!cur.classList.contains('on')) cur.pause(); }, 2500);
-    };
-    next.src = 'bg/alone/' + period + '.mp4';
-    next.play();
-  }
-
-  // Pauses the loop while the launcher is hidden or an input is showing.
-  function syncVideo() {
-    var v = document.querySelector('#bgv video.on');
-    if (!v) return;
-    if (document.hidden || inputMode) v.pause(); else v.play();
   }
 
   function showError(msg) {
@@ -271,7 +242,6 @@
     pendingInput = false;
     inputMode = true;
     root.classList.add('input-mode');
-    syncVideo();
   }
 
   function inputFailed(id, msg) {
@@ -284,7 +254,6 @@
     TV.hideInput();
     inputMode = false;
     root.classList.remove('input-mode');
-    syncVideo();
   }
 
   function activate() {
@@ -331,7 +300,6 @@
   document.addEventListener('visibilitychange', function () {
     lastKey = Date.now();
     exitAmbient();
-    syncVideo();
     if (document.hidden) { pendingInput = false; if (inputMode) exitInput(); closeWeek(); }
     else { refreshScreen(); refreshWeatherIfStale(); }
   });
@@ -339,10 +307,8 @@
   TV.registerNumberKeys();
   $('gear').innerHTML = Icons.gear;
   Settings.load();
-  var aloneProbe = new Image();
-  aloneProbe.onerror = function () { aloneMissing = true; setBackground(); };
-  aloneProbe.src = 'bg/alone.jpg';
   applySettings();
+  Pictures.load(setBackground);
   setInterval(tick, 10000);
   setInterval(function () { renderWeather(); }, 10 * 60 * 1000);
   setInterval(function () { Weather.refresh(weatherUrl, renderWeather); }, WEATHER_REFRESH);

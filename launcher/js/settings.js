@@ -6,8 +6,9 @@ var Settings = (function () {
     { name: 'Home tiles', icon: 'tiles', about: 'Show, hide, reorder or remove the tiles on the home screen' },
     { name: 'Add apps', icon: 'add', about: 'Give any app installed on this TV its own tile' },
     { name: 'Display', icon: 'display', about: 'Ambient screen, weather and background' },
+    { name: 'My pictures', icon: 'pictures', about: 'Import pictures from a USB stick to use as the background, and pick the times of day each one shows' },
     { name: 'Location', icon: 'location', about: 'Where the weather is for, and which time zone the clock shows' },
-    { name: 'Reset', icon: 'reset', about: 'Start over with the default tiles, display and location' }
+    { name: 'Reset', icon: 'reset', about: 'Put a part of the launcher back to how it came, or clear My pictures' }
   ];
   // Option rows: Left / Right step 'choice' rows through Logic.choices(key), OK opens them as a dropdown; 'toggle' rows flip.
   var DISPLAY = [
@@ -20,7 +21,16 @@ var Settings = (function () {
     { label: 'City', key: 'city', type: 'choice' },
     { label: 'Time zone', key: 'timezone', type: 'choice' }
   ];
-  var OPTIONS = { 2: DISPLAY, 3: LOCATION }; // sections made of Left / Right option rows
+  var PICTURES = 3;
+  // Reset rows: Logic.resetPart parts, plus My pictures, which deletes the imported files.
+  var RESETS = [
+    { part: 'tiles', icon: 'tiles', label: 'Home tiles' },
+    { part: 'display', icon: 'display', label: 'Display' },
+    { part: 'location', icon: 'location', label: 'Location' },
+    { part: 'pictures', icon: 'pictures', label: 'My pictures' },
+    { part: 'all', icon: 'reset', label: 'All settings' }
+  ];
+  var OPTIONS = { 2: DISPLAY, 4: LOCATION }; // sections made of Left / Right option rows
   var s = null; // current settings, always normalized
   var shown = false;
   var onClose = null;
@@ -28,11 +38,14 @@ var Settings = (function () {
   var sec = 0;
   var row = 0;
   var carrying = false;
-  var menu = -1; // highlighted action while a tile's action menu is open, -1 when closed
+  var menu = -1; // highlighted action while a tile's or picture's action menu is open, -1 when closed
   var pick = -1; // highlighted choice while an option row's dropdown is open, -1 when closed
   var apps = null; // installed apps, fetched the first time Add apps is entered
   var appsError = false;
-  var confirmReset = false;
+  var confirmReset = -1; // Reset row waiting for a second OK
+  var usb = null; // pictures found on the USB stick while browsing it, 'loading' while it is read, null when not browsing
+  var busy = false; // a picture is being copied or deleted
+  var confirmRemove = -1; // My pictures row whose Remove action is waiting for a second OK
   var note = ''; // one-off message in the hint line, cleared by the next key
 
   function $(id) { return document.getElementById(id); }
@@ -52,7 +65,9 @@ var Settings = (function () {
 
   function tileRows() { return Logic.allTiles(s, TILES); }
   function appRows() { return apps ? Logic.availableApps(apps, s, TILES) : []; }
-  function rowCount() { return [tileRows().length, appRows().length, DISPLAY.length, LOCATION.length, 1][sec]; }
+  // My pictures rows: the import row, then the imported pictures; while browsing the stick, what is on it.
+  function pictureRows() { return usb === 'loading' ? [] : usb || [null].concat(Pictures.all()); }
+  function rowCount() { return [tileRows().length, appRows().length, DISPLAY.length, pictureRows().length, LOCATION.length, RESETS.length][sec]; }
 
   function tileActions(t) {
     var list = [{ id: 'hide', label: t.hidden ? 'Show on home screen' : 'Hide from home screen' }, { id: 'move', label: 'Move' }];
@@ -60,13 +75,24 @@ var Settings = (function () {
     return list;
   }
 
+  // A picture's menu: a switch for each time of day, then Remove.
+  function pictureActions(p) {
+    var times = Logic.pictureTimes(s, p.name);
+    return Logic.TIMES.map(function (t) {
+      return { id: t, label: Logic.timeLabel(t), on: times.indexOf(t) !== -1 };
+    }).concat([{ id: 'remove', label: confirmRemove === row ? 'Press OK again to remove' : 'Remove picture' }]);
+  }
+
+  function menuActions() { return sec === 0 ? tileActions(tileRows()[row]) : pictureActions(pictureRows()[row]); }
+
   function open(cb) {
     onClose = cb;
     shown = true;
     level = sec = row = 0;
     menu = pick = -1;
-    carrying = confirmReset = appsError = false;
-    apps = null;
+    carrying = appsError = busy = false;
+    apps = usb = null;
+    confirmRemove = confirmReset = -1;
     note = '';
     document.documentElement.classList.add('settings-open');
     render();
@@ -83,7 +109,7 @@ var Settings = (function () {
   function enter() {
     level = 1;
     row = 0;
-    confirmReset = false;
+    confirmReset = -1;
     if (sec === 1 && !apps && !appsError) {
       TV.listApps(function (list) { apps = list; render(); }, function () { appsError = true; render(); });
     }
@@ -96,6 +122,7 @@ var Settings = (function () {
   }
 
   function act() {
+    if (sec === PICTURES) { actPicture(); return; }
     var t = tileRows()[row], id = tileActions(t)[menu].id;
     menu = -1;
     if (id === 'move') { carrying = true; return; }
@@ -103,6 +130,97 @@ var Settings = (function () {
     if (next === s) { note = 'At least one tile has to stay visible'; return; }
     save(next);
     if (id === 'remove') { row = Math.min(row, rowCount() - 1); note = 'Removed ' + t.label; }
+  }
+
+  function browseUsb() {
+    usb = 'loading';
+    row = 0;
+    Pictures.scanUsb(function (list) {
+      if (usb !== 'loading') return; // left while it was reading
+      if (!list.length) { usb = null; note = 'No pictures on the USB stick'; }
+      else usb = list;
+      render();
+    }, function (msg) {
+      if (usb !== 'loading') return;
+      usb = null;
+      note = msg;
+      render();
+    });
+  }
+
+  // Copies the picture into the app and makes My pictures the background.
+  function importPicture(p) {
+    busy = true;
+    note = 'Importing ' + p.name + '…';
+    Pictures.add(p, function () {
+      busy = false;
+      note = 'Imported ' + p.name;
+      if (s.background !== 'custom') { save(Logic.setOption(s, 'background', 'custom')); note += ' · background set to My pictures'; }
+      render();
+    }, function (msg) {
+      busy = false;
+      note = 'Couldn\'t import ' + p.name + ': ' + msg;
+      render();
+    });
+  }
+
+  function pressPicture() {
+    if (busy) return;
+    var p = pictureRows()[row];
+    if (usb) { if (!Pictures.has(p.name)) importPicture(p); return; }
+    if (!p) { browseUsb(); return; }
+    menu = 0;
+  }
+
+  // Time-of-day actions switch on the spot and keep the menu open; Remove needs a second OK.
+  function actPicture() {
+    var p = pictureRows()[row], id = pictureActions(p)[menu].id;
+    if (id !== 'remove') { save(Logic.togglePictureTime(s, p.name, id)); return; }
+    if (busy) return;
+    if (confirmRemove !== row) { confirmRemove = row; return; }
+    busy = true;
+    confirmRemove = -1;
+    menu = -1;
+    Pictures.remove(p.name, function () {
+      busy = false;
+      save(Logic.forgetPicture(s, p.name));
+      row = Math.min(row, rowCount() - 1);
+      note = 'Removed ' + p.name;
+      render();
+    }, function (msg) {
+      busy = false;
+      note = 'Couldn\'t remove ' + p.name + ': ' + msg;
+      render();
+    });
+  }
+
+  function isReset(r) { return r.part === 'pictures' ? !Pictures.all().length : Logic.isDefault(s, r.part, TILES); }
+
+  // First OK arms the row, the second resets it.
+  function pressReset() {
+    var r = RESETS[row];
+    if (busy) return;
+    if (isReset(r)) { note = r.part === 'pictures' ? 'No pictures to delete' : r.label + ' already at defaults'; return; }
+    if (confirmReset !== row) { confirmReset = row; return; }
+    confirmReset = -1;
+    if (r.part === 'pictures') { deleteAllPictures(); return; }
+    save(Logic.resetPart(s, r.part, TILES));
+    note = r.label + ' back to defaults';
+  }
+
+  function deleteAllPictures() {
+    var names = Pictures.all().map(function (p) { return p.name; }), total = names.length;
+    busy = true;
+    note = 'Deleting pictures…';
+    (function next() {
+      if (!names.length) { busy = false; save(Logic.setOption(s, 'pictureTimes', {})); note = 'Deleted ' + total + (total === 1 ? ' picture' : ' pictures'); render(); return; }
+      var name = names.shift();
+      Pictures.remove(name, next, function (msg) {
+        busy = false;
+        note = 'Couldn\'t delete ' + name + ': ' + msg;
+        render();
+      });
+    })();
   }
 
   function step(d, dir) {
@@ -118,16 +236,14 @@ var Settings = (function () {
       save(Logic.addApp(s, a));
       row = Math.max(0, Math.min(row, rowCount() - 1));
       note = 'Added ' + a.label;
+    } else if (sec === PICTURES) {
+      pressPicture();
     } else if (OPTIONS[sec]) {
       var d = OPTIONS[sec][row];
       if (d.type === 'toggle') step(d, 1);
       else pick = Logic.choiceIndex(d.key, s[d.key], s);
-    } else if (!confirmReset) {
-      confirmReset = true;
     } else {
-      save(Logic.normalizeSettings(null, TILES));
-      confirmReset = false;
-      note = 'Back to defaults';
+      pressReset();
     }
   }
 
@@ -135,12 +251,13 @@ var Settings = (function () {
     var isBack = BACK.indexOf(k) !== -1;
     var dir = k === 38 ? -1 : k === 40 ? 1 : 0;
     note = '';
+    if (k !== 13) confirmRemove = confirmReset = -1;
     if (level === 0) {
       if (isBack) { close(); return; }
       if (dir) sec = Logic.moveFocus(sec, dir, SECTIONS.length);
       else if (k === 39 || k === 13) enter();
     } else if (menu !== -1) {
-      if (dir) menu = Logic.moveFocus(menu, dir, tileActions(tileRows()[row]).length);
+      if (dir) menu = Logic.moveFocus(menu, dir, menuActions().length);
       else if (k === 13) act();
       else if (isBack || k === 37) menu = -1;
     } else if (pick !== -1) {
@@ -153,12 +270,13 @@ var Settings = (function () {
       else if (k === 13 || isBack) carrying = false;
     } else if (OPTIONS[sec] && (k === 37 || k === 39)) {
       step(OPTIONS[sec][row], k === 39 ? 1 : -1);
+    } else if (sec === PICTURES && usb && (isBack || k === 37)) {
+      usb = null; // back from the stick to My pictures
+      row = 0;
     } else if (isBack || k === 37) {
       level = 0;
-      confirmReset = false;
     } else if (dir) {
       if (rowCount()) row = Logic.moveFocus(row, dir, rowCount());
-      confirmReset = false;
     } else if (k === 13) press();
     render();
   }
@@ -176,15 +294,17 @@ var Settings = (function () {
         '<span class="s-num">' + num + '</span>' +
         '<span class="s-value">' + (t.hidden ? 'Hidden' : 'Shown') + '</span>' +
         '<span class="s-more">' + (f && carrying ? Icons.move : '&#8943;') + '</span></div>' +
-        (open ? actionMenu(t) : '');
+        (open ? actionMenu(tileActions(t)) : '');
     }).join('');
   }
 
   // Open menus and dropdowns list their choices as indented rows right under the row they belong to.
-  function actionMenu(t) {
-    return '<div class="s-choices">' + tileActions(t).map(function (a, i) {
+  // Picture menus tick the times of day the picture shows at.
+  function actionMenu(actions) {
+    return '<div class="s-choices">' + actions.map(function (a, i) {
       return '<div class="srow' + (i === menu ? ' focused' : '') + (a.id === 'remove' ? ' danger' : '') + '">' +
-        '<span class="s-name">' + a.label + '</span></div>';
+        '<span class="s-name">' + a.label + '</span>' +
+        ('on' in a ? '<span class="s-tick">' + (a.on ? Icons.check : '') + '</span>' : '') + '</div>';
     }).join('') + '</div>';
   }
 
@@ -200,16 +320,37 @@ var Settings = (function () {
     }).join('');
   }
 
+  function picturesPanel() {
+    if (usb === 'loading') return '<div class="s-msg">Looking for pictures on the USB stick…</div>';
+    return pictureRows().map(function (p, i) {
+      var open = rowFocused(i) && menu !== -1;
+      var cls = 'srow' + (open ? ' open' : rowFocused(i) ? ' focused' : '');
+      if (!p) {
+        return '<div class="' + cls + '"><span class="s-logo">' + Icons.usb + '</span>' +
+          '<span class="s-name">Import from USB stick</span></div>';
+      }
+      var value = usb ? (Pictures.has(p.name) ? 'Imported' : 'Import') : Logic.timesLabel(Logic.pictureTimes(s, p.name));
+      return '<div class="' + cls + '">' +
+        (usb ? '' : '<span class="s-logo"><img src="' + Logic.escapeHtml(p.url) + '"></span>') +
+        '<span class="s-name">' + Logic.escapeHtml(p.name) +
+        (usb && p.folder ? '<span class="s-folder">' + Logic.escapeHtml(p.folder) + '</span>' : '') + '</span>' +
+        '<span class="s-value">' + value + '</span></div>' +
+        (open ? actionMenu(pictureActions(p)) : '');
+    }).join('') + (!usb && !Pictures.all().length ? '<div class="s-msg">No pictures yet. Put some on a USB stick, plug it into the TV and import them here</div>' : '');
+  }
+
   function optionsPanel() {
     return OPTIONS[sec].map(function (d, i) {
       var open = rowFocused(i) && pick !== -1;
-      var value = d.type === 'toggle' ? (s[d.key] ? 'On' : 'Off') : Logic.choices(d.key, s)[Logic.choiceIndex(d.key, s[d.key], s)].label;
+      var value = d.type === 'toggle' ? (s[d.key] ? 'On' : 'Off') : choiceLabel(d.key, s);
       return '<div class="srow' + (open ? ' open' : rowFocused(i) ? ' focused' : '') + '"><span class="s-name">' + d.label + '</span>' +
         '<span class="s-pick"><span class="s-value">' + value + '</span>' +
         (d.type === 'toggle' ? '' : '<span class="s-chevron">' + Icons.chevron + '</span>') + '</span></div>' +
         (open ? dropdown(d.key) : '');
     }).join('');
   }
+
+  function choiceLabel(key, from) { return Logic.choices(key, from)[Logic.choiceIndex(key, from[key], from)].label; }
 
   function dropdown(key) {
     return '<div class="s-choices">' + Logic.choices(key, s).map(function (c, i) {
@@ -219,20 +360,41 @@ var Settings = (function () {
     }).join('') + '</div>';
   }
 
+  function resetValue(r, i) {
+    if (confirmReset === i) return r.part === 'pictures' ? 'Press OK again to delete' : 'Press OK again to reset';
+    if (r.part === 'pictures') {
+      var n = Pictures.all().length;
+      return n ? 'Delete ' + n + (n === 1 ? ' picture' : ' pictures') : 'None imported';
+    }
+    if (isReset(r)) return 'Already default';
+    var d = Logic.normalizeSettings(null, TILES);
+    if (r.part === 'tiles') return 'Default tiles and order, added apps removed';
+    if (r.part === 'display') return 'Ambient ' + choiceLabel('ambientMin', d) + ' · weather ' + (d.weather ? 'on' : 'off') + ' · ' + choiceLabel('background', d);
+    if (r.part === 'location') return d.city + ', ' + d.country + ' · city time zone';
+    return 'Tiles, display and location';
+  }
+
   function resetPanel() {
-    return '<div class="srow' + (rowFocused(0) ? ' focused' : '') + (confirmReset ? ' danger' : '') + '"><span class="s-name">' +
-      (confirmReset ? 'Press OK again to confirm' : 'Reset tiles, display and location to defaults') + '</span></div>';
+    return RESETS.map(function (r, i) {
+      return '<div class="srow s-reset' + (r.part === 'all' ? ' s-all' : '') + (isReset(r) ? ' off' : '') + (rowFocused(i) ? ' focused' : '') +
+        (confirmReset === i ? ' danger' : '') + '"><span class="s-logo">' + Icons.sections[r.icon] + '</span>' +
+        '<span class="s-name">' + r.label + '</span><span class="s-value">' + resetValue(r, i) + '</span></div>';
+    }).join('');
   }
 
   function hint() {
     if (level === 0) return 'Up / Down · section    OK · open    Back · close';
+    if (sec === PICTURES && menu !== -1) return 'Up / Down · choose    OK · on / off    Back · close';
     if (menu !== -1 || pick !== -1) return 'Up / Down · choose    OK · select    Back · cancel';
     if (carrying) return 'Up / Down · move    OK · drop';
     if (sec === 1 && (!apps || appsError || !appRows().length)) return 'Back · sections';
     if (sec === 0) return 'OK · options    Back · sections';
     if (sec === 1) return 'OK · add    Back · sections';
+    if (sec === PICTURES && usb === 'loading') return 'Back · cancel';
+    if (sec === PICTURES && usb) return 'OK · import    Back · My pictures';
+    if (sec === PICTURES) return row ? 'OK · times of day, remove    Back · sections' : 'OK · import    Back · sections';
     if (OPTIONS[sec]) return 'Left / Right · change    OK · list    Back · sections';
-    return 'OK · select    Back · sections';
+    return 'OK · reset    Back · sections';
   }
 
   // Scrolls the panel just enough to show the focused row or choice, focus ring included.
@@ -252,7 +414,7 @@ var Settings = (function () {
     }).join('');
     $('s-head').innerHTML = '<div class="s-title">' + SECTIONS[sec].name + '</div><div class="s-about">' + SECTIONS[sec].about + '</div>';
     $('settings').classList.toggle('inside', level === 1);
-    $('s-panel').innerHTML = [tilesPanel, appsPanel, optionsPanel, optionsPanel, resetPanel][sec]();
+    $('s-panel').innerHTML = [tilesPanel, appsPanel, optionsPanel, picturesPanel, optionsPanel, resetPanel][sec]();
     $('s-hint').textContent = note || hint();
     keepInView($('s-panel'));
   }

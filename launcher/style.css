@@ -4,17 +4,17 @@ html, body {
   color: #fff; font-family: 'SamsungOne', 'Segoe UI', Roboto, sans-serif;
 }
 #ui { position: absolute; inset: 0; }
-#bgv video { position: absolute; inset: 0; width: 1920px; height: 1080px; object-fit: cover; opacity: 0; transition: opacity 2s; }
-#bgv video.on { opacity: 1; }
 .shade {
   position: absolute; inset: 0;
   background:
     linear-gradient(to top, rgba(0,0,0,.65) 0%, rgba(0,0,0,.25) 45%, rgba(0,0,0,0) 70%),
+    linear-gradient(to bottom, rgba(0,0,0,.45) 0%, rgba(0,0,0,0) 200px),
     linear-gradient(to right, rgba(0,0,0,.35), rgba(0,0,0,0) 60%);
 }
 header {
   position: absolute; top: 52px; left: 120px; right: 120px;
   display: flex; justify-content: space-between; align-items: center; font-size: 34px;
+  text-shadow: 0 1px 3px rgba(0,0,0,.6), 0 2px 14px rgba(0,0,0,.5);
 }
 #clock { font-size: 42px; font-weight: 300; }
 .hero { position: absolute; left: 120px; top: 440px; }
@@ -90,7 +90,7 @@ html.week-open header, html.week-open .hero, html.week-open .card, html.week-ope
 }
 #toast.show { opacity: 1; }
 header, .hero, .card, #tiles { transition: opacity .8s; }
-#ambient { position: absolute; left: 120px; bottom: 100px; opacity: 0; transition: opacity .8s; text-shadow: 0 2px 16px rgba(0,0,0,.5); }
+#ambient { position: absolute; left: 120px; bottom: 100px; opacity: 0; transition: opacity .8s; text-shadow: 0 2px 4px rgba(0,0,0,.5), 0 2px 20px rgba(0,0,0,.55); }
 #a-clock { font-size: 220px; font-weight: 200; line-height: 1; letter-spacing: -4px; }
 #a-date { font-size: 28px; letter-spacing: 6px; opacity: .85; margin: 20px 0 0 8px; }
 #ambient .wx { display: flex; align-items: center; gap: 16px; font-size: 48px; font-weight: 300; margin: 24px 0 0 4px; }
@@ -100,10 +100,10 @@ html.ambient #ambient { opacity: 1; }
 html.ambient header, html.ambient .hero, html.ambient .card, html.ambient #tiles { opacity: 0; }
 body.no-weather .wx { display: none; }
 html.input-mode, html.input-mode body { background: transparent !important; }
-html.input-mode #ui, html.input-mode #bgv { display: none; }
+html.input-mode #ui { display: none; }
 .hdr-right { display: flex; align-items: center; gap: 28px; }
-#gear { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: .8; transition: transform .15s ease-out; }
-#gear svg { width: 36px; height: 36px; display: block; }
+#gear { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: .9; transition: transform .15s ease-out; }
+#gear svg { width: 36px; height: 36px; display: block; filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)) drop-shadow(0 2px 8px rgba(0,0,0,.45)); }
 #gear.focused { opacity: 1; background: rgba(255,255,255,.15); box-shadow: 0 0 0 4px #fff; transform: scale(1.1); }
 .tile .logo img { height: 96px; width: auto; display: block; margin-top: -20px; }
 .tile .logo .letter { display: block; font-size: 84px; font-weight: 600; margin-top: -20px; }
@@ -142,6 +142,8 @@ html.input-mode #ui, html.input-mode #bgv { display: none; }
 .s-name { flex: 1; }
 .s-num { width: 30px; text-align: center; font-size: 24px; opacity: .6; }
 .s-value { font-size: 24px; opacity: .75; }
+.s-logo img { border-radius: 4px; }
+.s-folder { font-size: 22px; opacity: .55; margin-left: 18px; }
 .s-more { width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; font-size: 30px; opacity: .5; }
 .s-more svg { width: 26px; height: 26px; display: block; }
 .srow.focused .s-more, .srow.open .s-more, .srow.carrying .s-more { opacity: 1; }
@@ -152,6 +154,10 @@ html.input-mode #ui, html.input-mode #bgv { display: none; }
 .srow.focused .s-chevron { opacity: .9; }
 .srow.open .s-chevron { opacity: .9; transform: rotate(180deg); }
 .s-msg { font-size: 28px; opacity: .7; padding: 18px 24px; }
+.srow.danger.focused { box-shadow: 0 0 0 4px #FF8A80; background: rgba(255,138,128,.14); }
+.srow.s-all { margin-top: 28px; }
+.s-reset .s-logo svg { width: 40px; height: 40px; }
+.srow.danger .s-value { opacity: 1; }
 #settings .hint { position: absolute; left: 0; right: 0; bottom: 80px; text-align: center; font-size: 22px; opacity: .7; white-space: pre; }
 html.settings-open #settings { display: block; }
 html.settings-open header, html.settings-open .hero, html.settings-open .card, html.settings-open #tiles { visibility: hidden; }
